@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>厨房人机工程学模型</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+      background: #fff;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .canvas-area {
+      flex: 1;
+      position: relative;
+      background: #fff;
+      border-right: 1px solid #e0e0e0;
+    }
+    .canvas-area svg { width: 100%; height: 100%; }
+    .sidebar {
+      width: 300px;
+      background: #fafafa;
+      overflow-y: auto;
+      padding: 0;
+      border-left: 1px solid #eee;
+    }
+    .panel {
+      padding: 14px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .panel-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #e94560;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 6px;
+    }
+    .row label {
+      font-size: 12px;
+      color: #666;
+      width: 72px;
+      flex-shrink: 0;
+    }
+    .row input[type="range"] {
+      flex: 1;
+      height: 3px;
+      -webkit-appearance: none;
+      background: #ddd;
+      border-radius: 2px;
+      outline: none;
+    }
+    .row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #e94560;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .row .val {
+      font-size: 11px;
+      color: #e94560;
+      width: 42px;
+      text-align: right;
+      font-family: 'SF Mono', Menlo, monospace;
+      font-weight: 500;
+    }
+    .row input[type="number"] {
+      width: 56px;
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #333;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+      text-align: center;
+    }
+    .row input[type="number"]:focus { border-color: #e94560; }
+    .row .unit { font-size: 11px; color: #999; width: 24px; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .toggle-row label { font-size: 12px; color: #666; flex: 1; }
+    .toggle {
+      width: 36px;
+      height: 20px;
+      background: #ddd;
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle.on { background: #e94560; }
+    .toggle::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .toggle.on::after { left: 18px; }
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .preset-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #666;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .preset-btn:hover { border-color: #e94560; color: #e94560; }
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .data-item {
+      background: #fff;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+    .data-item .dl { font-size: 10px; color: #999; }
+    .data-item .dv { font-size: 13px; color: #333; font-family: 'SF Mono', Menlo, monospace; font-weight: 600; }
+    .comfort-box {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .comfort-good { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .comfort-warn { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+    .comfort-bad { background: #fce4ec; color: #c62828; border: 1px solid #f8bbd0; }
+    .bottom-bar {
+      height: 6px;
+      background: #2196f3;
+    }
+    .btn-row { display: flex; gap: 6px; margin-top: 8px; }
+    .btn {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      background: #fff;
+      color: #666;
+    }
+    .btn:hover { border-color: #e94560; color: #e94560; }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="canvas-area" id="canvasArea">
+      <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="sidebar">
+      <div class="panel">
+        <div class="panel-title">人体参数</div>
+        <div class="row">
+          <label>身高</label>
+          <input type="number" id="inputHeight" value="170" min="140" max="200" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>性别</label>
+          <select id="inputGender" style="width:56px;background:#fff;border:1px solid #ddd;color:#333;padding:4px 6px;border-radius:4px;font-size:12px;">
+            <option value="male">男</option>
+            <option value="female">女</option>
+          </select>
+        </div>
+        <div class="data-grid" id="bodyDataGrid" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">关节角度</div>
+        <div class="row">
+          <label>颈部前倾</label>
+          <input type="range" id="neckAngle" min="0" max="60" value="15">
+          <span class="val" id="neckAngleVal">15°</span>
+        </div>
+        <div class="row">
+          <label>腰部弯曲</label>
+          <input type="range" id="waistAngle" min="-30" max="60" value="10">
+          <span class="val" id="waistAngleVal">10°</span>
+        </div>
+        <div class="row">
+          <label>肩部角度</label>
+          <input type="range" id="shoulderAngle" min="-30" max="120" value="20">
+          <span class="val" id="shoulderAngleVal">20°</span>
+        </div>
+        <div class="row">
+          <label>肘部弯曲</label>
+          <input type="range" id="elbowAngle" min="0" max="150" value="90">
+          <span class="val" id="elbowAngleVal">90°</span>
+        </div>
+        <div class="presets">
+          <button class="preset-btn" onclick="presetStanding()">站立</button>
+          <button class="preset-btn" onclick="presetCooking()">烹饪</button>
+          <button class="preset-btn" onclick="presetReaching()">取物</button>
+          <button class="preset-btn" onclick="presetWashing()">洗涤</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">厨房尺寸</div>
+        <div class="row">
+          <label>台面高度</label>
+          <input type="number" id="counterHeight" value="90" min="40" max="120" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>台面深度</label>
+          <input type="number" id="counterDepth" value="60" min="40" max="80" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>吊柜底高</label>
+          <input type="number" id="wallCabinetHeight" value="150" min="100" max="200" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>吊柜纵深</label>
+          <input type="number" id="wallCabinetDepth" value="35" min="20" max="60" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>吊柜高</label>
+          <input type="number" id="wallCabinetH" value="70" min="30" max="100" step="1">
+          <span class="unit">cm</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">台面物品</div>
+        <div class="row">
+          <label>物品宽度</label>
+          <input type="number" id="objWidth" value="33" min="5" max="60" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>物品高度</label>
+          <input type="number" id="objHeight" value="32" min="5" max="80" step="1">
+          <span class="unit">cm</span>
+        </div>
+        <div class="row">
+          <label>人到物距离</label>
+          <input type="number" id="personDist" value="40" min="10" max="80" step="1">
+          <span class="unit">cm</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">屏幕设置</div>
+        <div class="toggle-row">
+          <label>顶部屏幕</label>
+          <div class="toggle on" id="toggleTopScreen" onclick="toggleTop()"></div>
+        </div>
+        <div id="topScreenControls">
+          <div class="row">
+            <label>宽度</label>
+            <input type="number" id="topScreenW" value="5" min="1" max="40" step="1">
+            <span class="unit">cm</span>
+          </div>
+          <div class="row">
+            <label>位置偏移</label>
+            <input type="range" id="topScreenPos" min="0" max="100" value="90">
+            <span class="val" id="topScreenPosVal">90%</span>
+          </div>
+        </div>
+        <div class="toggle-row" style="margin-top:10px;">
+          <label>右侧屏幕</label>
+          <div class="toggle on" id="toggleSideScreen" onclick="toggleSide()"></div>
+        </div>
+        <div id="sideScreenControls">
+          <div class="row">
+            <label>宽度</label>
+            <input type="number" id="sideScreenW" value="5" min="1" max="40" step="1">
+            <span class="unit">cm</span>
+          </div>
+          <div class="row">
+            <label>位置偏移</label>
+            <input type="range" id="sideScreenPos" min="0" max="100" value="85">
+            <span class="val" id="sideScreenPosVal">85%</span>
+          </div>
+        </div>
+        <div class="toggle-row" style="margin-top:10px;">
+          <label>显示顶屏视角范围</label>
+          <div class="toggle on" id="toggleTopVis" onclick="toggleTopVis()"></div>
+        </div>
+        <div class="toggle-row">
+          <label>显示侧屏视角范围</label>
+          <div class="toggle on" id="toggleSideVis" onclick="toggleSideVis()"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">舒适度评估</div>
+        <div id="comfortResult"></div>
+      </div>
+
+      <div class="panel">
+        <div class="btn-row">
+          <button class="btn" onclick="exportConfig()">导出</button>
+          <button class="btn" onclick="importConfig()">导入</button>
+          <button class="btn" onclick="resetAll()">重置</button>
+        </div>
+        <input type="file" id="fileInput" accept=".json" style="display:none;">
+      </div>
+    </div>
+  </div>
+  <div class="bottom-bar"></div>
+
+  <script>
+    const S = {
+      height: 170, gender: 'male',
+      neckAngle: 15, waistAngle: 10, shoulderAngle: 20, elbowAngle: 90,
+      counterHeight: 90, counterDepth: 60,
+      wallCabinetHeight: 150, wallCabinetDepth: 35, wallCabinetH: 70,
+      objWidth: 33, objHeight: 32, personDist: 40,
+      topScreenOn: true, topScreenW: 5, topScreenPos: 90,
+      sideScreenOn: true, sideScreenW: 5, sideScreenPos: 85,
+      showTopVis: true, showSideVis: true,
+      zoom: 1, panX: 0, panY: 0
+    };
+
+    function bp() {
+      const h = S.height;
+      const m = S.gender === 'male';
+      return {
+        headLen: h*0.13, headW: h*0.085,
+        neckLen: h*0.04,
+        upperArm: h*0.186, forearm: h*0.146, hand: h*0.108,
+        trunk: h*0.288, trunkW: h*(m?0.09:0.08),
+        thigh: h*0.245, shank: h*0.246, footH: h*0.039, footL: h*0.15,
+        shoulderH: h*0.818, elbowH: h*0.630, waistH: h*0.570,
+        crotchH: h*0.470, kneeH: h*0.285, eyeH: h*0.936,
+        armW: h*0.035, forearmW: h*0.028, thighW: h*0.055, shankW: h*0.035
+      };
+    }
+
+    const svg = document.getElementById('mainSvg');
+    let W = 800, H = 600;
+
+    function resize() {
+      const a = document.getElementById('canvasArea');
+      W = a.clientWidth; H = a.clientHeight;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    }
+
+    function px(cm) { return cm * 3.8 * S.zoom; }
+
+    function render() {
+      const b = bp();
+      const groundY = H - 50 + S.panY;
+      // Person faces left, placed right of center
+      const personX = W * 0.6 + S.panX;
+      let out = '';
+      out += grid(groundY);
+      out += kitchen(groundY, personX, b);
+      out += object(groundY, personX, b);
+      out += screens(groundY, personX, b);
+      out += human(groundY, personX, b);
+      out += dims(groundY, personX, b);
+      svg.innerHTML = out;
+      updateData(b);
+      evaluate(b);
+    }
+
+    function grid(gy) {
+      const g = px(10);
+      let s = `<defs><pattern id="g" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
+        <path d="M ${g} 0 L 0 0 0 ${g}" fill="none" stroke="#ddd" stroke-width="0.5"/>
+      </pattern></defs>`;
+      s += `<rect width="100%" height="100%" fill="#fff"/>`;
+      s += `<rect width="100%" height="100%" fill="url(#g)"/>`;
+      s += `<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="#3b429e" stroke-width="2.5"/>`;
+      s += `<rect x="0" y="${gy}" width="${W}" height="4" fill="#3b429e" opacity="0.1"/>`;
+      return s;
+    }
+
+    function kitchen(gy, px_, b) {
+      let s = '';
+      const sc = px(1);
+      const wallX = px_ - S.personDist * sc - S.objWidth * sc - 30;
+      const cTop = gy - S.counterHeight * sc;
+      const cW = S.counterDepth * sc;
+      const cabinetLeft = wallX;
+      const cabinetColor = '#3b429e';
+
+      // Wall (gray background)
+      s += `<rect x="${cabinetLeft}" y="0" width="${cW * 0.25}" height="${gy}"
+            fill="#d9d9d9" stroke="none"/>`;
+
+      // Base cabinet (counter height is to the top edge)
+      s += `<rect x="${cabinetLeft}" y="${cTop}" width="${cW}" height="${S.counterHeight*sc}"
+            fill="#fff" stroke="${cabinetColor}" stroke-width="2"/>`;
+
+      // Wall cabinet
+      const wcBot = gy - S.wallCabinetHeight * sc;
+      const wcTop = wcBot - S.wallCabinetH * sc;
+      const wcW = S.wallCabinetDepth * sc;
+      s += `<rect x="${cabinetLeft}" y="${wcTop}" width="${wcW}" height="${S.wallCabinetH*sc}"
+            fill="#fff" stroke="${cabinetColor}" stroke-width="2"/>`;
+
+      // Wall line
+      s += `<line x1="${cabinetLeft}" y1="0" x2="${cabinetLeft}" y2="${gy}" stroke="#999" stroke-width="1"/>`;
+
+      return s;
+    }
+
+    function object(gy, px_, b) {
+      let s = '';
+      const sc = px(1);
+      const cTop = gy - S.counterHeight * sc;
+      const counterTopY = cTop;
+      // Object sits directly on countertop
+      const objLeft = px_ - S.personDist * sc - S.objWidth * sc;
+      const objW = S.objWidth * sc;
+      const objH = S.objHeight * sc;
+      const objTop = counterTopY - objH;
+
+      // Object body
+      s += `<rect x="${objLeft}" y="${objTop}" width="${objW}" height="${objH}"
+            fill="#d9d9d9" stroke="#3b429e" stroke-width="1.5"/>`;
+
+      // Label
+      s += `<text x="${objLeft + objW/2}" y="${objTop + objH/2 + 4}" text-anchor="middle"
+            font-size="10" fill="#666" font-family="monospace">${S.objWidth}×${S.objHeight}</text>`;
+
+      return s;
+    }
+
+    function screens(gy, px_, b) {
+      let s = '';
+      const sc = px(1);
+      const cTop = gy - S.counterHeight * sc;
+      const counterTopY = cTop;
+      const objLeft = px_ - S.personDist * sc - S.objWidth * sc;
+      const objW = S.objWidth * sc;
+      const objH = S.objHeight * sc;
+      const objTop = counterTopY - objH;
+
+      // Eye position (fixed on head, rotated around headCenter)
+      const joints = calcJoints(gy, sc, px_, b);
+      const headRx = b.headW * sc * 0.45;
+      const headRy = b.headLen * sc * 0.45;
+      const _hRotRad = -(S.waistAngle + S.neckAngle) * Math.PI / 180;
+      const _cosR = Math.cos(_hRotRad), _sinR = Math.sin(_hRotRad);
+      const _elX = -headRx * 0.85, _elY = -headRy * 0.2;
+      const eyeX = joints.headCenter.x + _elX * _cosR - _elY * _sinR;
+      const eyeY = joints.headCenter.y + _elX * _sinR + _elY * _cosR;
+
+      // Top screen
+      if (S.topScreenOn) {
+        const tW = S.topScreenW * sc;
+        const tPos = S.topScreenPos / 100;
+        const tLeft = objLeft + (objW - tW) * tPos;
+        const tY = objTop;
+        s += `<line x1="${tLeft}" y1="${tY}" x2="${tLeft + tW}" y2="${tY}" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>`;
+
+        // 45° fan sector (screen faces up, normal is upward)
+        if (S.showTopVis) {
+          const midX = tLeft + tW / 2;
+          const midY = tY;
+          const r = 130;
+          const normalAngle = -Math.PI / 2;
+          const half = Math.PI / 4;
+          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, '#c5cae9', '#3b429e');
+
+          // Check if eye POINT is within the 45° cone
+          const dx = eyeX - midX, dy = eyeY - midY;
+          const angle = Math.atan2(dy, dx);
+          const diff = Math.abs(angleDiff(angle, normalAngle));
+          const inCone = diff <= half;
+          s += `<line x1="${midX}" y1="${midY}" x2="${eyeX}" y2="${eyeY}"
+                stroke="${inCone ? '#4caf50' : '#f44336'}" stroke-width="1" stroke-dasharray="4,3"/>`;
+          const lbX = (midX + eyeX) / 2, lbY = (midY + eyeY) / 2;
+          s += `<text x="${lbX - 16}" y="${lbY - 6}" font-size="9" fill="${inCone ? '#4caf50' : '#f44336'}" font-weight="bold">${inCone ? '可视 ✓' : '不可视 ✗'}</text>`;
+        }
+      }
+
+      // Side screen (right side of object, facing right toward person)
+      if (S.sideScreenOn) {
+        const sW = S.sideScreenW * sc;
+        const sPos = S.sideScreenPos / 100;
+        const sX = objLeft + objW;
+        const sTop = objTop + (objH - sW) * (1 - sPos);
+        s += `<line x1="${sX}" y1="${sTop}" x2="${sX}" y2="${sTop + sW}" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>`;
+
+        // 45° fan sector (screen faces right, normal is rightward)
+        if (S.showSideVis) {
+          const midX = sX;
+          const midY = sTop + sW / 2;
+          const r = 130;
+          const normalAngle = 0;
+          const half = Math.PI / 4;
+          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, '#c5cae9', '#3b429e');
+
+          // Check if eye POINT is within the 45° cone
+          const dx = eyeX - midX, dy = eyeY - midY;
+          const angle = Math.atan2(dy, dx);
+          const diff = Math.abs(angleDiff(angle, normalAngle));
+          const inCone = diff <= half;
+          s += `<line x1="${midX}" y1="${midY}" x2="${eyeX}" y2="${eyeY}"
+                stroke="${inCone ? '#4caf50' : '#f44336'}" stroke-width="1" stroke-dasharray="4,3"/>`;
+          const lbX = (midX + eyeX) / 2, lbY = (midY + eyeY) / 2;
+          s += `<text x="${lbX}" y="${lbY - 6}" font-size="9" fill="${inCone ? '#4caf50' : '#f44336'}" font-weight="bold">${inCone ? '可视 ✓' : '不可视 ✗'}</text>`;
+        }
+      }
+
+      return s;
+    }
+
+    function angleDiff(a, b) {
+      let d = a - b;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      return d;
+    }
+
+    function sector(cx, cy, r, startAngle, endAngle, fill, stroke) {
+      const x1 = cx + r * Math.cos(startAngle);
+      const y1 = cy + r * Math.sin(startAngle);
+      const x2 = cx + r * Math.cos(endAngle);
+      const y2 = cy + r * Math.sin(endAngle);
+      const largeArc = (endAngle - startAngle) > Math.PI ? 1 : 0;
+      return `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z"
+              fill="${fill}" fill-opacity="0.2" stroke="${stroke}" stroke-width="0.8" stroke-dasharray="4,2"/>`;
+    }
+
+    function human(gy, personX, b) {
+      let s = '';
+      const sc = px(1);
+      const j = calcJoints(gy, sc, personX, b);
+      const col = '#3b429e';
+      const jcol = '#e94560';
+
+      // Body segments with proportional stroke width (round caps give organic shape)
+      // Legs
+      s += limb(j.hip, j.knee, b.thighW*sc*0.7, col);
+      s += limb(j.knee, j.ankle, b.shankW*sc*0.7, col);
+      // Foot
+      s += `<ellipse cx="${j.ankle.x - b.footL*sc*0.2}" cy="${gy - b.footH*sc*0.5}"
+            rx="${b.footL*sc*0.35}" ry="${b.footH*sc*0.5}" fill="none" stroke="${col}" stroke-width="2"/>`;
+
+      // Torso
+      s += limb(j.hip, j.shoulder, b.trunkW*sc*0.8, col);
+
+      // Upper arm
+      s += limb(j.shoulder, j.elbow, b.armW*sc*0.7, col);
+      // Forearm
+      s += limb(j.elbow, j.wrist, b.forearmW*sc*0.7, col);
+      // Wrist
+      s += `<circle cx="${j.wrist.x}" cy="${j.wrist.y}" r="${b.forearmW*sc*0.25}" fill="none" stroke="${col}" stroke-width="1.5"/>`;
+      // Hand
+      s += `<circle cx="${j.hand.x}" cy="${j.hand.y}" r="${b.hand*sc*0.15}" fill="none" stroke="${col}" stroke-width="1.5"/>`;
+
+      // Neck
+      s += limb(j.neckBase, j.headBase, b.headW*sc*0.25, col);
+      // Head — rotates with tilt
+      const headRx = b.headW * sc * 0.45;
+      const headRy = b.headLen * sc * 0.45;
+      const headRotDeg = S.waistAngle + S.neckAngle;
+      s += `<ellipse cx="${j.headCenter.x}" cy="${j.headCenter.y}"
+            rx="${headRx}" ry="${headRy}" fill="none" stroke="${col}" stroke-width="2"
+            transform="rotate(${-headRotDeg}, ${j.headCenter.x}, ${j.headCenter.y})"/>`;
+
+      // Joints
+      [j.hip, j.waist, j.shoulder, j.elbow, j.neckBase].forEach(p => {
+        s += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${jcol}" stroke="#fff" stroke-width="1"/>`;
+      });
+
+      // Eye — fixed on head at local offset, rotated with head around headCenter
+      const eyeLocalX = -headRx * 0.85;
+      const eyeLocalY = -headRy * 0.2;
+      const headRotRad = -headRotDeg * Math.PI / 180;
+      const cosR = Math.cos(headRotRad), sinR = Math.sin(headRotRad);
+      const eyeX = j.headCenter.x + eyeLocalX * cosR - eyeLocalY * sinR;
+      const eyeY = j.headCenter.y + eyeLocalX * sinR + eyeLocalY * cosR;
+      s += `<circle cx="${eyeX}" cy="${eyeY}" r="4.5" fill="#ff9800" stroke="#fff" stroke-width="1.5"/>`;
+      s += `<circle cx="${eyeX}" cy="${eyeY}" r="1.8" fill="#333"/>`;
+      s += `<text x="${eyeX - 18}" y="${eyeY - 10}" font-size="9" fill="#ff9800" font-weight="bold" font-family="monospace">眼睛</text>`;
+
+      // Eye height reference line (short horizontal dashed from eye)
+      s += `<line x1="${eyeX}" y1="${eyeY}" x2="${personX + 45}" y2="${eyeY}"
+            stroke="#ff9800" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.6"/>`;
+      const eyeHcm = ((gy - eyeY) / sc).toFixed(1);
+      s += `<text x="${personX + 48}" y="${eyeY + 3}" font-size="9" fill="#ff9800" font-family="monospace">眼高${eyeHcm}cm</text>`;
+
+      // Angle arcs
+      s += arc(j.waist, 90, 90 + S.waistAngle, 22, jcol, `${S.waistAngle}°`);
+      s += arc(j.neckBase, 90 + S.waistAngle, 90 + S.waistAngle + S.neckAngle, 18, '#ff7043', `${S.neckAngle}°`);
+      // Shoulder arc: angle between arm and trunk body (trunk-down from shoulder)
+      // Trunk-down reference line (dashed)
+      const trunkRefLen = 30;
+      const trunkDownRad = S.waistAngle * Math.PI / 180;
+      s += `<line x1="${j.shoulder.x}" y1="${j.shoulder.y}"
+            x2="${j.shoulder.x + Math.sin(trunkDownRad) * trunkRefLen}" y2="${j.shoulder.y + Math.cos(trunkDownRad) * trunkRefLen}"
+            stroke="#7b1fa2" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>`;
+      // Arc: trunk-down = -90 - waistAngle; arm = shoulderAngle - waistAngle - 90; sweep = shoulderAngle
+      s += arc(j.shoulder, -90 - S.waistAngle, S.shoulderAngle - S.waistAngle - 90, 20, '#7b1fa2', `${S.shoulderAngle}°`);
+
+      // Vertical reference (red center line)
+      s += `<line x1="${personX}" y1="${gy}" x2="${personX}" y2="${gy - S.height*sc}"
+            stroke="#e94560" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.5"/>`;
+
+      return s;
+    }
+
+    function calcJoints(gy, sc, px_, b) {
+      const wR = S.waistAngle * Math.PI / 180;
+      const nR = S.neckAngle * Math.PI / 180;
+      const sR = S.shoulderAngle * Math.PI / 180;
+      const eR = S.elbowAngle * Math.PI / 180;
+
+      const ankle = { x: px_, y: gy - b.footH * sc };
+      const knee = { x: px_, y: ankle.y - b.shank * sc };
+      const hip = { x: px_, y: knee.y - b.thigh * sc };
+      const waist = { x: px_, y: gy - b.waistH * sc };
+
+      // Person faces LEFT: forward tilt goes to -x direction
+      const trunkLen = (b.shoulderH - b.waistH) * sc;
+      const shoulder = {
+        x: waist.x - Math.sin(wR) * trunkLen,
+        y: waist.y - Math.cos(wR) * trunkLen
+      };
+
+      const nLen = b.neckLen * sc;
+      const neckBase = {
+        x: shoulder.x - Math.sin(wR) * nLen,
+        y: shoulder.y - Math.cos(wR) * nLen
+      };
+
+      const cNR = wR + nR;
+      const headBase = {
+        x: neckBase.x - Math.sin(cNR) * nLen * 0.5,
+        y: neckBase.y - Math.cos(cNR) * nLen * 0.5
+      };
+      const headCenter = {
+        x: headBase.x - Math.sin(cNR) * b.headLen * sc * 0.4,
+        y: headBase.y - Math.cos(cNR) * b.headLen * sc * 0.4
+      };
+
+      // Arms: shoulderAngle is the angle between arm and trunk body
+      // sR=0: arm along trunk-down; sR>0: arm raised forward (toward left)
+      // Arm absolute angle from vertical (in -sin/+cos system) = sR - wR
+      const armAbsAngle = sR - wR;
+      const elbow = {
+        x: shoulder.x - Math.sin(armAbsAngle) * b.upperArm * sc,
+        y: shoulder.y + Math.cos(armAbsAngle) * b.upperArm * sc
+      };
+
+      const foreAngle = armAbsAngle + (Math.PI - eR);
+      const wrist = {
+        x: elbow.x - Math.sin(foreAngle) * b.forearm * sc,
+        y: elbow.y + Math.cos(foreAngle) * b.forearm * sc
+      };
+      const hand = {
+        x: wrist.x - Math.sin(foreAngle) * b.hand * sc * 0.4,
+        y: wrist.y + Math.cos(foreAngle) * b.hand * sc * 0.4
+      };
+
+      return { ankle, knee, hip, waist, shoulder, neckBase, headBase, headCenter, elbow, wrist, hand };
+    }
+
+    function limb(a, b_, w, c) {
+      return `<line x1="${a.x}" y1="${a.y}" x2="${b_.x}" y2="${b_.y}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+    }
+
+
+    function arc(center, startDeg, endDeg, r, color, label) {
+      if (Math.abs(endDeg - startDeg) < 1) return '';
+      const s1 = startDeg * Math.PI / 180, s2 = endDeg * Math.PI / 180;
+      // In SVG, facing left: angles go counter from +x
+      // We use canvas-left orientation
+      const x1 = center.x + r * Math.cos(Math.PI - s1);
+      const y1 = center.y - r * Math.sin(Math.PI - s1);
+      const x2 = center.x + r * Math.cos(Math.PI - s2);
+      const y2 = center.y - r * Math.sin(Math.PI - s2);
+      const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+      const sweep = endDeg > startDeg ? 0 : 1;
+      let s = `<path d="M ${center.x} ${center.y} L ${x1} ${y1} A ${r} ${r} 0 ${large} ${sweep} ${x2} ${y2} Z"
+            fill="${color}" fill-opacity="0.12" stroke="${color}" stroke-width="1" stroke-dasharray="3,2"/>`;
+      const midA = ((startDeg + endDeg) / 2) * Math.PI / 180;
+      const lx = center.x + (r + 14) * Math.cos(Math.PI - midA);
+      const ly = center.y - (r + 14) * Math.sin(Math.PI - midA);
+      s += `<text x="${lx}" y="${ly}" font-size="9" fill="${color}" text-anchor="middle" font-family="monospace" font-weight="bold">${label}</text>`;
+      return s;
+    }
+
+    function dims(gy, px_, b) {
+      let s = '';
+      const sc = px(1);
+      // Height dimension on right
+      const dx = px_ + 40;
+      s += dimLine(dx, gy, dx, gy - S.height*sc, `${S.height}`, '#e94560');
+
+      // Counter height on left
+      const wallX = px_ - S.personDist*sc - S.objWidth*sc - 30;
+      const cabinetLeft = wallX;
+      s += dimLine(cabinetLeft - 20, gy, cabinetLeft - 20, gy - S.counterHeight*sc, `${S.counterHeight}`, '#333');
+
+      // Person distance
+      const objRight = px_ - S.personDist*sc;
+      s += `<line x1="${objRight}" y1="${gy + 15}" x2="${px_}" y2="${gy + 15}" stroke="#666" stroke-width="0.8" marker-start="url(#arr)" marker-end="url(#arr)"/>`;
+      s += `<text x="${(objRight + px_)/2}" y="${gy + 28}" text-anchor="middle" font-size="9" fill="#666" font-family="monospace">${S.personDist}cm</text>`;
+
+      // Arrow marker
+      s += `<defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+        <path d="M 0 1 L 6 3 L 0 5" fill="none" stroke="#666" stroke-width="0.8"/>
+      </marker></defs>`;
+
+      return s;
+    }
+
+    function dimLine(x1, y1, x2, y2, label, color) {
+      let s = '';
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="1"/>`;
+      s += `<line x1="${x1-3}" y1="${y1}" x2="${x1+3}" y2="${y1}" stroke="${color}" stroke-width="1"/>`;
+      s += `<line x1="${x2-3}" y1="${y2}" x2="${x2+3}" y2="${y2}" stroke="${color}" stroke-width="1"/>`;
+      const my = (y1+y2)/2;
+      s += `<text x="${x1+6}" y="${my+3}" font-size="10" fill="${color}" font-family="monospace" font-weight="bold">${label}</text>`;
+      return s;
+    }
+
+    // === Data ===
+    function updateData(b) {
+      const items = [
+        { l:'眼高', v:b.eyeH.toFixed(1) },
+        { l:'肩高', v:b.shoulderH.toFixed(1) },
+        { l:'肘高', v:b.elbowH.toFixed(1) },
+        { l:'裆高', v:b.crotchH.toFixed(1) },
+        { l:'上臂', v:b.upperArm.toFixed(1) },
+        { l:'前臂', v:b.forearm.toFixed(1) },
+      ];
+      document.getElementById('bodyDataGrid').innerHTML = items.map(i =>
+        `<div class="data-item"><span class="dl">${i.l}</span><span class="dv">${i.v}cm</span></div>`
+      ).join('');
+    }
+
+    // === Comfort ===
+    function evaluate(b) {
+      const issues = [], goods = [];
+
+      if (S.neckAngle <= 25) goods.push('颈椎 ≤25° 舒适');
+      else issues.push({ t: `颈椎前倾 ${S.neckAngle}°＞25°`, l: S.neckAngle > 45 ? 2 : 1 });
+
+      if (S.waistAngle <= 20) goods.push('腰部 ≤20° 舒适');
+      else issues.push({ t: `腰部前倾 ${S.waistAngle}°＞20°`, l: S.waistAngle > 40 ? 2 : 1 });
+
+      if (S.shoulderAngle <= 20) goods.push('肩部上抬 ≤20° 舒适');
+      else issues.push({ t: `肩部上抬 ${S.shoulderAngle}°＞20°`, l: S.shoulderAngle > 60 ? 2 : 1 });
+
+      // Eye in screen cone check — uses rotated eye POINT position
+      const sc = px(1);
+      const gy = H - 50 + S.panY;
+      const personX = W * 0.6 + S.panX;
+      const j = calcJoints(gy, sc, personX, b);
+      const headRx = b.headW * sc * 0.45;
+      const headRy = b.headLen * sc * 0.45;
+      const _hR2 = -(S.waistAngle + S.neckAngle) * Math.PI / 180;
+      const _c2 = Math.cos(_hR2), _s2 = Math.sin(_hR2);
+      const _ex = -headRx*0.85, _ey = -headRy*0.2;
+      const eyeX = j.headCenter.x + _ex*_c2 - _ey*_s2;
+      const eyeY = j.headCenter.y + _ex*_s2 + _ey*_c2;
+
+      if (S.topScreenOn) {
+        const objLeft = personX - S.personDist*sc - S.objWidth*sc;
+        const cTop = gy - S.counterHeight*sc;
+        const counterTopY = cTop;
+        const objTop = counterTopY - S.objHeight*sc;
+        const tW = S.topScreenW*sc;
+        const tPos = S.topScreenPos/100;
+        const midX = objLeft + (S.objWidth*sc - tW)*tPos + tW/2;
+        const midY = objTop;
+        const dx = eyeX - midX, dy = eyeY - midY;
+        const a = Math.atan2(dy, dx);
+        const diff = Math.abs(angleDiff(a, -Math.PI/2));
+        if (diff <= Math.PI/4) goods.push('眼睛位于顶屏45°可视范围内');
+        else issues.push({ t: '眼睛位于顶屏45°可视范围外', l: 1 });
+      }
+
+      if (S.sideScreenOn) {
+        const objLeft = personX - S.personDist*sc - S.objWidth*sc;
+        const cTop = gy - S.counterHeight*sc;
+        const counterTopY = cTop;
+        const objH = S.objHeight*sc;
+        const objTop = counterTopY - objH;
+        const sW = S.sideScreenW*sc;
+        const sPos = S.sideScreenPos/100;
+        const midX = objLeft + S.objWidth*sc;
+        const midY = objTop + (objH - sW)*(1-sPos) + sW/2;
+        const dx = eyeX - midX, dy = eyeY - midY;
+        const a = Math.atan2(dy, dx);
+        const diff = Math.abs(angleDiff(a, 0));
+        if (diff <= Math.PI/4) goods.push('眼睛位于侧屏45°可视范围内');
+        else issues.push({ t: '眼睛位于侧屏45°可视范围外', l: 1 });
+      }
+
+      let html = '';
+      if (issues.length === 0) {
+        html += `<div class="comfort-box comfort-good">✓ 所有指标均在舒适范围</div>`;
+      } else {
+        const cls = issues.some(i => i.l === 2) ? 'comfort-bad' : 'comfort-warn';
+        html += `<div class="comfort-box ${cls}">` + issues.map(i => `⚠ ${i.t}`).join('<br>') + `</div>`;
+      }
+      if (goods.length > 0) {
+        html += `<div style="margin-top:6px;font-size:11px;color:#2e7d32;line-height:1.6;">` + goods.map(g => `✓ ${g}`).join('<br>') + `</div>`;
+      }
+      document.getElementById('comfortResult').innerHTML = html;
+    }
+
+    // === Toggles ===
+    function toggleTop() {
+      S.topScreenOn = !S.topScreenOn;
+      document.getElementById('toggleTopScreen').classList.toggle('on', S.topScreenOn);
+      document.getElementById('topScreenControls').style.display = S.topScreenOn ? '' : 'none';
+      render();
+    }
+    function toggleSide() {
+      S.sideScreenOn = !S.sideScreenOn;
+      document.getElementById('toggleSideScreen').classList.toggle('on', S.sideScreenOn);
+      document.getElementById('sideScreenControls').style.display = S.sideScreenOn ? '' : 'none';
+      render();
+    }
+    function toggleTopVis() {
+      S.showTopVis = !S.showTopVis;
+      document.getElementById('toggleTopVis').classList.toggle('on', S.showTopVis);
+      render();
+    }
+    function toggleSideVis() {
+      S.showSideVis = !S.showSideVis;
+      document.getElementById('toggleSideVis').classList.toggle('on', S.showSideVis);
+      render();
+    }
+
+    // === Presets ===
+    function presetStanding() { setA(0,0,0,0); }
+    function presetCooking() { setA(20,10,20,90); }
+    function presetReaching() { setA(10,5,60,20); }
+    function presetWashing() { setA(25,15,25,100); }
+    function setA(n,w,sh,e) {
+      S.neckAngle=n; S.waistAngle=w; S.shoulderAngle=sh; S.elbowAngle=e;
+      document.getElementById('neckAngle').value=n;
+      document.getElementById('waistAngle').value=w;
+      document.getElementById('shoulderAngle').value=sh;
+      document.getElementById('elbowAngle').value=e;
+      document.getElementById('neckAngleVal').textContent=n+'°';
+      document.getElementById('waistAngleVal').textContent=w+'°';
+      document.getElementById('shoulderAngleVal').textContent=sh+'°';
+      document.getElementById('elbowAngleVal').textContent=e+'°';
+      render();
+    }
+    function resetAll() {
+      S.height=170; S.counterHeight=90; S.counterDepth=60;
+      S.wallCabinetHeight=150; S.wallCabinetDepth=35; S.wallCabinetH=70;
+      S.objWidth=33; S.objHeight=32; S.personDist=40;
+      S.topScreenW=5; S.topScreenPos=90; S.sideScreenW=5; S.sideScreenPos=85;
+      syncUI();
+      setA(15,10,20,90);
+    }
+    function syncUI() {
+      document.getElementById('inputHeight').value=S.height;
+      document.getElementById('inputGender').value=S.gender;
+      document.getElementById('counterHeight').value=S.counterHeight;
+      document.getElementById('counterDepth').value=S.counterDepth;
+      document.getElementById('wallCabinetHeight').value=S.wallCabinetHeight;
+      document.getElementById('wallCabinetDepth').value=S.wallCabinetDepth;
+      document.getElementById('wallCabinetH').value=S.wallCabinetH;
+      document.getElementById('objWidth').value=S.objWidth;
+      document.getElementById('objHeight').value=S.objHeight;
+      document.getElementById('personDist').value=S.personDist;
+      document.getElementById('topScreenW').value=S.topScreenW;
+      document.getElementById('topScreenPos').value=S.topScreenPos;
+      document.getElementById('topScreenPosVal').textContent=S.topScreenPos+'%';
+      document.getElementById('sideScreenW').value=S.sideScreenW;
+      document.getElementById('sideScreenPos').value=S.sideScreenPos;
+      document.getElementById('sideScreenPosVal').textContent=S.sideScreenPos+'%';
+      document.getElementById('toggleTopScreen').classList.toggle('on', S.topScreenOn);
+      document.getElementById('toggleSideScreen').classList.toggle('on', S.sideScreenOn);
+      document.getElementById('toggleTopVis').classList.toggle('on', S.showTopVis);
+      document.getElementById('toggleSideVis').classList.toggle('on', S.showSideVis);
+      document.getElementById('topScreenControls').style.display = S.topScreenOn ? '' : 'none';
+      document.getElementById('sideScreenControls').style.display = S.sideScreenOn ? '' : 'none';
+    }
+
+    // === Bindings ===
+    function bind() {
+      const numInputs = ['inputHeight','counterHeight','counterDepth','wallCabinetHeight','wallCabinetDepth','wallCabinetH','objWidth','objHeight','personDist','topScreenW','sideScreenW'];
+      const stateMap = { inputHeight:'height', counterHeight:'counterHeight', counterDepth:'counterDepth', wallCabinetHeight:'wallCabinetHeight', wallCabinetDepth:'wallCabinetDepth', wallCabinetH:'wallCabinetH', objWidth:'objWidth', objHeight:'objHeight', personDist:'personDist', topScreenW:'topScreenW', sideScreenW:'sideScreenW' };
+      numInputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', e => {
+          S[stateMap[id]] = parseFloat(e.target.value) || 0;
+          render();
+        });
+      });
+      document.getElementById('inputGender').addEventListener('change', e => { S.gender=e.target.value; render(); });
+
+      ['neckAngle','waistAngle','shoulderAngle','elbowAngle'].forEach(id => {
+        document.getElementById(id).addEventListener('input', e => {
+          S[id] = parseFloat(e.target.value);
+          document.getElementById(id+'Val').textContent = e.target.value+'°';
+          render();
+        });
+      });
+
+      ['topScreenPos','sideScreenPos'].forEach(id => {
+        document.getElementById(id).addEventListener('input', e => {
+          S[id] = parseFloat(e.target.value);
+          document.getElementById(id+'Val').textContent = e.target.value+'%';
+          render();
+        });
+      });
+    }
+
+    // === Pan/Zoom ===
+    let drag=false, dx0, dy0;
+    document.getElementById('canvasArea').addEventListener('mousedown', e => { drag=true; dx0=e.clientX-S.panX; dy0=e.clientY-S.panY; });
+    document.addEventListener('mousemove', e => { if(!drag)return; S.panX=e.clientX-dx0; S.panY=e.clientY-dy0; render(); });
+    document.addEventListener('mouseup', ()=>{ drag=false; });
+    document.getElementById('canvasArea').addEventListener('wheel', e => {
+      e.preventDefault();
+      S.zoom = Math.max(0.4, Math.min(3, S.zoom * (e.deltaY<0?1.1:0.9)));
+      render();
+    });
+
+    // === Export/Import ===
+    function exportConfig() {
+      const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download=`ergonomics-${S.height}cm.json`; a.click();
+    }
+    function importConfig() { document.getElementById('fileInput').click(); }
+    document.getElementById('fileInput').addEventListener('change', e => {
+      const f=e.target.files[0]; if(!f)return;
+      const r=new FileReader(); r.onload=ev=>{
+        try { Object.assign(S, JSON.parse(ev.target.result)); resetAll(); } catch(e){ alert('格式错误'); }
+      }; r.readAsText(f);
+    });
+
+    // === LocalStorage persistence ===
+    const STORAGE_KEY = 'kitchen_ergonomics_state';
+    function saveState() {
+      const toSave = {...S};
+      delete toSave.zoom; delete toSave.panX; delete toSave.panY;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          Object.assign(S, data);
+          S.zoom = 1; S.panX = 0; S.panY = 0;
+        }
+      } catch(e) {}
+    }
+
+    // Wrap render to auto-save
+    const _origRender = render;
+    render = function() { _origRender(); saveState(); };
+
+    // === Init ===
+    loadState();
+    window.addEventListener('resize', ()=>{ resize(); render(); });
+    resize(); bind(); syncUI(); setA(S.neckAngle, S.waistAngle, S.shoulderAngle, S.elbowAngle);
+  </script>
+</body>
+</html>
