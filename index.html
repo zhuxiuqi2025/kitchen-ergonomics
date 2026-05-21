@@ -694,9 +694,21 @@
             rx="${headRx}" ry="${headRy}" fill="none" stroke="${col}" stroke-width="2"
             transform="rotate(${-headRotDeg}, ${j.headCenter.x}, ${j.headCenter.y})"/>`;
 
-      // Joints
+      // Joints (visible dots)
       [j.hip, j.waist, j.shoulder, j.elbow, j.neckBase, j.knee].forEach(p => {
         s += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${jcol}" stroke="#fff" stroke-width="1"/>`;
+      });
+      // Draggable joint hit areas
+      const dragJoints = [
+        {p: j.neckBase, name: 'neckAngle'},
+        {p: j.waist, name: 'waistAngle'},
+        {p: j.shoulder, name: 'shoulderAngle'},
+        {p: j.elbow, name: 'elbowAngle'},
+        {p: j.knee, name: 'kneeAngle'}
+      ];
+      dragJoints.forEach(({p, name}) => {
+        const r = name === 'kneeAngle' ? 18 : 14;
+        s += `<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="rgba(0,0,0,0)" pointer-events="all" data-joint="${name}" style="cursor:grab"/>`;
       });
 
       // Eye — fixed on head at local offset, rotated with head around headCenter
@@ -1099,11 +1111,51 @@
       });
     }
 
-    // === Pan (disabled when defaultScale is on) ===
-    let drag=false, dx0, dy0;
-    document.getElementById('canvasArea').addEventListener('mousedown', e => { if(S.defaultScale)return; drag=true; dx0=e.clientX-S.panX; dy0=e.clientY-S.panY; });
-    document.addEventListener('mousemove', e => { if(!drag)return; S.panX=e.clientX-dx0; S.panY=e.clientY-dy0; render(); });
-    document.addEventListener('mouseup', ()=>{ drag=false; });
+    // === Joint drag & Pan ===
+    let drag = false, dx0, dy0, jointDrag = null;
+    const jointLimits = {
+      neckAngle: {min:0, max:60, sens:0.5},
+      waistAngle: {min:-30, max:60, sens:0.5},
+      shoulderAngle: {min:-30, max:120, sens:-0.5},
+      elbowAngle: {min:0, max:180, sens:0.5},
+      kneeAngle: {min:0, max:120, sens:0.8}
+    };
+    document.getElementById('canvasArea').addEventListener('mousedown', e => {
+      const t = e.target.closest('[data-joint]');
+      if (t) {
+        e.preventDefault();
+        e.stopPropagation();
+        const name = t.dataset.joint;
+        jointDrag = { name, startX: e.clientX, startY: e.clientY, startVal: S[name] };
+        return;
+      }
+      if (!S.defaultScale) { drag=true; dx0=e.clientX-S.panX; dy0=e.clientY-S.panY; }
+    });
+    document.addEventListener('mousemove', e => {
+      if (jointDrag) {
+        const dx = e.clientX - jointDrag.startX;
+        const dy = e.clientY - jointDrag.startY;
+        const lim = jointLimits[jointDrag.name];
+        let delta;
+        if (jointDrag.name === 'shoulderAngle') {
+          delta = -dy * 0.5 + -dx * 0.3;
+        } else if (jointDrag.name === 'kneeAngle') {
+          delta = -dx * 0.6;
+        } else {
+          delta = dy * lim.sens;
+        }
+        let newVal = jointDrag.startVal + delta;
+        newVal = Math.max(lim.min, Math.min(lim.max, Math.round(newVal)));
+        S[jointDrag.name] = newVal;
+        document.getElementById(jointDrag.name).value = newVal;
+        document.getElementById(jointDrag.name + 'Val').textContent = newVal + '°';
+        render();
+        return;
+      }
+      if (!drag) return;
+      S.panX = e.clientX - dx0; S.panY = e.clientY - dy0; render();
+    });
+    document.addEventListener('mouseup', () => { jointDrag = null; drag = false; });
     // Block wheel zoom
     document.getElementById('canvasArea').addEventListener('wheel', e => { e.preventDefault(); });
 
