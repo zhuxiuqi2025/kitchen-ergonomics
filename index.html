@@ -475,8 +475,10 @@
     function render() {
       const b = bp();
       const groundY = H - 50 + S.panY;
-      // Person faces left, placed right of center
-      const personX = W * 0.6 + S.panX;
+      const sc = px(1);
+      // Kitchen stays fixed; person moves right as personDist increases
+      const kitchenFront = W * 0.4 + 90 + S.panX;
+      const personX = kitchenFront + S.personDist * sc;
       let out = '';
       out += grid(groundY);
       out += kitchen(groundY, personX, b);
@@ -954,7 +956,7 @@
       // Eye in screen cone check — uses rotated eye POINT position
       const sc = px(1);
       const gy = H - 50 + S.panY;
-      const personX = W * 0.6 + S.panX;
+      const personX = W * 0.4 + S.panX + S.personDist * sc;
       const j = calcJoints(gy, sc, personX, b);
       const headRx = b.headW * sc * 0.45;
       const headRy = b.headLen * sc * 0.45;
@@ -1193,6 +1195,21 @@
     });
 
     // === Named configs ===
+    // One-time migration: adjust old personDist values for object-centered layout
+    if (!localStorage.getItem('kitchen_ergo_migrated_v2')) {
+      try {
+        const old = JSON.parse(localStorage.getItem('kitchen_ergonomics_configs') || '{}');
+        if (Object.keys(old).length > 0) {
+          for (const k in old) {
+            if (old[k].data && old[k].data.personDist > 13.5) {
+              old[k].data.personDist = Math.round((old[k].data.personDist - 13.5) * 10) / 10;
+            }
+          }
+          localStorage.setItem('kitchen_ergonomics_configs', JSON.stringify(old));
+        }
+      } catch(e) {}
+      localStorage.setItem('kitchen_ergo_migrated_v2', '1');
+    }
     const CONFIGS_KEY = 'kitchen_ergonomics_configs';
     const BUILTIN_CONFIGS = {
       "侧-153-舒适-肩15度":{"data":{"height":153,"gender":"female","neckAngle":0,"waistAngle":0,"shoulderAngle":15,"elbowAngle":70,"counterHeight":90,"counterDepth":60,"wallCabinetHeight":150,"wallCabinetDepth":35,"wallCabinetH":70,"objWidth":33,"objHeight":32,"personDist":20.5,"topScreenOn":false,"topScreenW":5,"topScreenPos":90,"sideScreenOn":true,"sideScreenW":5,"sideScreenPos":85,"showTopVis":true,"showSideVis":true,"defaultScale":true},"time":1779174870130},
@@ -1232,10 +1249,14 @@
     function applyNamedConfig(name) {
       const configs = loadConfigs();
       if (!configs[name]) return;
-      Object.assign(S, configs[name].data);
-      S.zoom = 1; S.panX = 0; S.panY = 0;
+      const d = configs[name].data;
+      // Only apply body/posture params, keep kitchen/object dimensions unchanged
+      const applyKeys = ['height','gender','neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle',
+        'personDist','topScreenOn','sideScreenOn','showTopVis','showSideVis'];
+      S.neckAngle = 0; S.waistAngle = 0; S.shoulderAngle = 0; S.elbowAngle = 90; S.kneeAngle = 0;
+      applyKeys.forEach(k => { if (d[k] !== undefined) S[k] = d[k]; });
+      S.zoom = 1; S.panX = 0; S.panY = 0; S.defaultScale = true;
       syncUI();
-      // Sync angle slider labels
       ['neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle'].forEach(id => {
         document.getElementById(id).value = S[id] || 0;
         document.getElementById(id+'Val').textContent = (S[id]||0)+'°';
