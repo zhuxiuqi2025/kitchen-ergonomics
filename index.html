@@ -268,6 +268,7 @@
           <select id="inputGender" style="width:56px;background:#fff;border:1px solid #ddd;color:#333;padding:4px 6px;border-radius:4px;font-size:12px;">
             <option value="male">男</option>
             <option value="female">女</option>
+            <option value="all">所有</option>
           </select>
         </div>
         <div class="data-grid" id="bodyDataGrid" style="margin-top:8px;"></div>
@@ -448,12 +449,12 @@
 
     function bp() {
       const h = S.height;
-      const m = S.gender === 'male';
+      const trunkWRatio = S.gender === 'male' ? 0.09 : S.gender === 'female' ? 0.08 : 0.085;
       return {
         headLen: h*0.13, headW: h*0.085,
         neckLen: h*0.04,
         upperArm: h*0.186, forearm: h*0.153, hand: h*0.108,
-        trunk: h*0.288, trunkW: h*(m?0.09:0.08),
+        trunk: h*0.288, trunkW: h*trunkWRatio,
         thigh: h*0.245, shank: h*0.246, footH: h*0.039, footL: h*0.15,
         shoulderH: h*0.818, elbowH: h*0.630, waistH: h*0.570,
         crotchH: h*0.480, kneeH: h*0.285, eyeH: h*0.936,
@@ -736,7 +737,7 @@
       const waistColor = S.waistAngle <= 20 ? '#2e7d32' : S.waistAngle <= 60 ? '#e65100' : '#c62828';
       s += arc(j.waist, 90, 90 + S.waistAngle, 28, waistColor, `躯干${S.waistAngle}°`);
       // Neck angle
-      const neckColor = S.neckAngle <= 25 ? '#2e7d32' : S.neckAngle <= 60 ? '#e65100' : '#c62828';
+      const neckColor = S.neckAngle <= 25 ? '#2e7d32' : S.neckAngle <= 85 ? '#e65100' : '#c62828';
       s += arc(j.neckBase, 90 + S.waistAngle, 90 + S.waistAngle + S.neckAngle, 22, neckColor, `颈${S.neckAngle}°`);
       // Shoulder arc
       const shoulderColor = S.shoulderAngle <= 20 ? '#2e7d32' : S.shoulderAngle <= 85 ? '#e65100' : '#c62828';
@@ -909,8 +910,11 @@
     function getPercentile(h, gender) {
       // European adult height percentiles (EN ISO 7250 / Pheasant)
       // Male: P5=164, P50=176, P95=188; Female: P5=153, P50=163, P95=174
-      const m = gender === 'male';
-      const p5 = m ? 164 : 153, p50 = m ? 176 : 163, p95 = m ? 188 : 174;
+      // All (50/50 combined): P5≈156, P50≈170, P95≈186
+      let p5, p50, p95;
+      if (gender === 'male') { p5=164; p50=176; p95=188; }
+      else if (gender === 'female') { p5=153; p50=163; p95=174; }
+      else { p5=156; p50=170; p95=186; }
       if (h <= p5) return 'P5以下';
       if (h >= p95) return 'P95以上';
       if (h < p50) {
@@ -942,8 +946,8 @@
       const issues = [], goods = [];
 
       if (S.neckAngle <= 25) goods.push('颈/头前屈 ≤25° 舒适');
-      else if (S.neckAngle <= 60) issues.push({ t: `颈/头前屈 ${S.neckAngle}°＞25°（超出舒适）`, l: 1 });
-      else issues.push({ t: `颈/头前屈 ${S.neckAngle}°＞60°（不可接受）`, l: 2 });
+      else if (S.neckAngle <= 85) issues.push({ t: `颈/头前屈 ${S.neckAngle}°＞25°（超出舒适）`, l: 1 });
+      else issues.push({ t: `颈/头前屈 ${S.neckAngle}°＞85°（不可接受）`, l: 2 });
 
       if (S.waistAngle <= 20) goods.push('躯干前倾 ≤20° 舒适');
       else if (S.waistAngle <= 60) issues.push({ t: `躯干前倾 ${S.waistAngle}°＞20°（超出舒适）`, l: 1 });
