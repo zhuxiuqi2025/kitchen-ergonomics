@@ -277,7 +277,7 @@
         <div class="panel-title">关节角度</div>
         <div class="row">
           <label>颈部前倾</label>
-          <input type="range" id="neckAngle" min="0" max="60" value="15">
+          <input type="range" id="neckAngle" min="0" max="90" value="15">
           <span class="val" id="neckAngleVal">15°</span>
         </div>
         <div class="row">
@@ -1127,7 +1127,7 @@
     // === Joint drag & Pan ===
     let drag = false, dx0, dy0, jointDrag = null;
     const jointLimits = {
-      neckAngle: {min:0, max:60, sens:0.5},
+      neckAngle: {min:0, max:90, sens:0.5},
       waistAngle: {min:-30, max:60, sens:0.5},
       shoulderAngle: {min:-30, max:120, sens:-0.5},
       elbowAngle: {min:0, max:180, sens:0.5},
