@@ -260,6 +260,13 @@
       <div class="panel">
         <div class="panel-title">人体参数</div>
         <div class="row">
+          <label>人群</label>
+          <select id="inputRegion" style="width:80px;background:#fff;border:1px solid #ddd;color:#333;padding:4px 6px;border-radius:4px;font-size:12px;">
+            <option value="europe">欧洲人</option>
+            <option value="china">中国人</option>
+          </select>
+        </div>
+        <div class="row">
           <label>身高</label>
           <input type="number" id="inputHeight" value="170" min="140" max="200" step="1">
           <span class="unit">cm</span>
@@ -445,7 +452,7 @@
 
   <script>
     const S = {
-      height: 170, gender: 'male',
+      height: 170, gender: 'male', region: 'europe',
       neckAngle: 15, waistAngle: 10, shoulderAngle: 20, elbowAngle: 90, kneeAngle: 0,
       counterHeight: 90, counterDepth: 60,
       wallCabinetHeight: 150, wallCabinetDepth: 35, wallCabinetH: 70,
@@ -928,13 +935,14 @@
 
     // === Data ===
     function getPercentile(h, gender) {
-      // European adult height percentiles (EN ISO 7250 / Pheasant)
-      // Male: P5=164, P50=176, P95=188; Female: P5=153, P50=163, P95=174
-      // All (50/50 combined): P5≈156, P50≈170, P95≈186
-      let p5, p50, p95;
-      if (gender === 'male') { p5=164; p50=176; p95=188; }
-      else if (gender === 'female') { p5=153; p50=163; p95=174; }
-      else { p5=156; p50=170; p95=186; }
+      // Europe (EN ISO 7250 / Pheasant): male P5=164/P50=176/P95=188; female P5=153/P50=163/P95=174
+      // China (GB/T 10000-1988): male P5=158/P50=168/P95=178; female P5=148/P50=157/P95=166
+      const regionData = {
+        europe: { male:[164,176,188], female:[153,163,174], all:[156,170,186] },
+        china:  { male:[158,168,178], female:[148,157,166], all:[152,162,173] }
+      };
+      const r = regionData[S.region] || regionData.europe;
+      const [p5, p50, p95] = r[gender] || r.all;
       if (h <= p5) return 'P5以下';
       if (h >= p95) return 'P95以上';
       if (h < p50) {
@@ -1096,6 +1104,7 @@
     function syncUI() {
       document.getElementById('inputHeight').value=S.height;
       document.getElementById('inputGender').value=S.gender;
+      document.getElementById('inputRegion').value=S.region;
       document.getElementById('counterHeight').value=S.counterHeight;
       document.getElementById('counterDepth').value=S.counterDepth;
       document.getElementById('wallCabinetHeight').value=S.wallCabinetHeight;
@@ -1143,6 +1152,7 @@
         });
       });
       document.getElementById('inputGender').addEventListener('change', e => { S.gender=e.target.value; render(); });
+      document.getElementById('inputRegion').addEventListener('change', e => { S.region=e.target.value; render(); });
 
       ['neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle'].forEach(id => {
         document.getElementById(id).addEventListener('input', e => {
@@ -1288,7 +1298,7 @@
       if (!configs[name]) return;
       const d = configs[name].data;
       // Only apply body/posture params, keep kitchen/object dimensions unchanged
-      const applyKeys = ['height','gender','neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle',
+      const applyKeys = ['height','gender','region','neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle',
         'personDist','objPos','topScreenOn','sideScreenOn','showTopVis','showSideVis'];
       S.neckAngle = 0; S.waistAngle = 0; S.shoulderAngle = 0; S.elbowAngle = 90; S.kneeAngle = 0;
       S.objPos = 'center';
