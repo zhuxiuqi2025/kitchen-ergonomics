@@ -936,11 +936,12 @@
     // === Data ===
     function getPercentile(h, gender) {
       // Europe (EN ISO 7250 / Pheasant): male P5=164/P50=176/P95=188; female P5=153/P50=163/P95=174
-      // China (GB/T 10000-1988): male P5=158/P50=168/P95=178; female P5=148/P50=157/P95=166
+      // China (modern, ~2020 health surveys / GB/T 10000-2023 estimate):
+      //   male P5=160/P50=170/P95=181; female P5=150/P50=159/P95=168
       // "all" = 50/50 male+female normal mixture (recomputed, not naive averaging)
       const regionData = {
         europe: { male:[164,176,188], female:[153,163,174], all:[155,169,185] },
-        china:  { male:[158,168,178], female:[148,157,166], all:[150,162,176] }
+        china:  { male:[160,170,181], female:[150,159,168], all:[152,164,178] }
       };
       const r = regionData[S.region] || regionData.europe;
       const [p5, p50, p95] = r[gender] || r.all;
