@@ -142,6 +142,7 @@
       cursor: pointer;
     }
     .preset-btn:hover { border-color: #e94560; color: #e94560; }
+    .preset-btn.active { background: #e94560; color: #fff; border-color: #e94560; }
     .save-row {
       display: flex;
       gap: 6px;
@@ -354,6 +355,14 @@
           <input type="number" id="personDist" value="40" min="0" max="120" step="1">
           <span class="unit">cm</span>
         </div>
+        <div class="row">
+          <label>水平位置</label>
+          <div class="presets" style="margin-top:0;flex:1;">
+            <button class="preset-btn" id="objPosLeft" onclick="setObjPos('left')">最左</button>
+            <button class="preset-btn" id="objPosCenter" onclick="setObjPos('center')">居中</button>
+            <button class="preset-btn" id="objPosRight" onclick="setObjPos('right')">最右</button>
+          </div>
+        </div>
       </div>
 
       <div class="panel">
@@ -440,12 +449,18 @@
       neckAngle: 15, waistAngle: 10, shoulderAngle: 20, elbowAngle: 90, kneeAngle: 0,
       counterHeight: 90, counterDepth: 60,
       wallCabinetHeight: 150, wallCabinetDepth: 35, wallCabinetH: 70,
-      objWidth: 33, objHeight: 32, personDist: 40,
+      objWidth: 33, objHeight: 32, personDist: 40, objPos: 'center',
       topScreenOn: true, topScreenW: 5, topScreenPos: 90,
       sideScreenOn: true, sideScreenW: 5, sideScreenPos: 85,
       showTopVis: true, showSideVis: true,
       defaultScale: true, zoom: 1, panX: 0, panY: 0
     };
+
+    function objOffset(counterDepthPx, objWPx) {
+      if (S.objPos === 'left') return 0;
+      if (S.objPos === 'right') return counterDepthPx - objWPx;
+      return (counterDepthPx - objWPx) / 2;
+    }
 
     function bp() {
       const h = S.height;
@@ -543,7 +558,7 @@
       const counterFront = px_ - S.personDist * sc;
       const counterBack = counterFront - S.counterDepth * sc;
       const objW = S.objWidth * sc;
-      const objLeft = counterBack + (S.counterDepth * sc - objW) / 2;
+      const objLeft = counterBack + objOffset(S.counterDepth * sc, objW);
       const objH = S.objHeight * sc;
       const objTop = counterTopY - objH;
 
@@ -566,7 +581,7 @@
       const counterFront = px_ - S.personDist * sc;
       const counterBack = counterFront - S.counterDepth * sc;
       const objW = S.objWidth * sc;
-      const objLeft = counterBack + (S.counterDepth * sc - objW) / 2;
+      const objLeft = counterBack + objOffset(S.counterDepth * sc, objW);
       const objH = S.objHeight * sc;
       const objTop = counterTopY - objH;
 
@@ -896,7 +911,7 @@
       const eyeX = j.headCenter.x + (-headRx*0.85)*Math.cos(_hr) - (-headRy*0.2)*Math.sin(_hr);
       const counterBack = counterFront - S.counterDepth*sc;
       const objW = S.objWidth*sc;
-      const sideScreenX = counterBack + (S.counterDepth*sc - objW)/2 + objW;
+      const sideScreenX = counterBack + objOffset(S.counterDepth*sc, objW) + objW;
       const distPx = eyeX - sideScreenX;
       const distCm = (distPx / sc).toFixed(1);
       s += `<line x1="${sideScreenX}" y1="${gy + 20}" x2="${eyeX}" y2="${gy + 20}" stroke="#e94560" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`;
@@ -974,7 +989,7 @@
         const counterFront2 = personX - S.personDist*sc;
         const counterBack2 = counterFront2 - S.counterDepth*sc;
         const objW2 = S.objWidth*sc;
-        const objLeft = counterBack2 + (S.counterDepth*sc - objW2)/2;
+        const objLeft = counterBack2 + objOffset(S.counterDepth*sc, objW2);
         const cTop = gy - S.counterHeight*sc;
         const counterTopY = cTop;
         const objTop = counterTopY - S.objHeight*sc;
@@ -993,7 +1008,7 @@
         const counterFront3 = personX - S.personDist*sc;
         const counterBack3 = counterFront3 - S.counterDepth*sc;
         const objW3 = S.objWidth*sc;
-        const objLeft = counterBack3 + (S.counterDepth*sc - objW3)/2;
+        const objLeft = counterBack3 + objOffset(S.counterDepth*sc, objW3);
         const cTop = gy - S.counterHeight*sc;
         const counterTopY = cTop;
         const objH = S.objHeight*sc;
@@ -1097,6 +1112,15 @@
       document.getElementById('topScreenControls').style.display = S.topScreenOn ? '' : 'none';
       document.getElementById('sideScreenControls').style.display = S.sideScreenOn ? '' : 'none';
       document.getElementById('toggleDefaultScale').classList.toggle('on', S.defaultScale);
+      document.getElementById('objPosLeft').classList.toggle('active', S.objPos==='left');
+      document.getElementById('objPosCenter').classList.toggle('active', S.objPos==='center');
+      document.getElementById('objPosRight').classList.toggle('active', S.objPos==='right');
+    }
+
+    function setObjPos(pos) {
+      S.objPos = pos;
+      syncUI();
+      render();
     }
 
     // === Bindings ===
