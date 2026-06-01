@@ -461,6 +461,11 @@
       if (S.objPos === 'right') return counterDepthPx - objWPx;
       return (counterDepthPx - objWPx) / 2;
     }
+    function objOffsetCm(pos) {
+      if (pos === 'left') return 0;
+      if (pos === 'right') return S.counterDepth - S.objWidth;
+      return (S.counterDepth - S.objWidth) / 2;
+    }
 
     function bp() {
       const h = S.height;
@@ -1118,8 +1123,12 @@
     }
 
     function setObjPos(pos) {
+      if (pos === S.objPos) return;
+      const delta = objOffsetCm(pos) - objOffsetCm(S.objPos);
       S.objPos = pos;
+      S.personDist = Math.max(0, Math.min(120, Math.round((S.personDist + delta) * 10) / 10));
       syncUI();
+      document.getElementById('personDist').value = S.personDist;
       render();
     }
 
@@ -1280,8 +1289,9 @@
       const d = configs[name].data;
       // Only apply body/posture params, keep kitchen/object dimensions unchanged
       const applyKeys = ['height','gender','neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle',
-        'personDist','topScreenOn','sideScreenOn','showTopVis','showSideVis'];
+        'personDist','objPos','topScreenOn','sideScreenOn','showTopVis','showSideVis'];
       S.neckAngle = 0; S.waistAngle = 0; S.shoulderAngle = 0; S.elbowAngle = 90; S.kneeAngle = 0;
+      S.objPos = 'center';
       applyKeys.forEach(k => { if (d[k] !== undefined) S[k] = d[k]; });
       S.zoom = 1; S.panX = 0; S.panY = 0; S.defaultScale = true;
       syncUI();
