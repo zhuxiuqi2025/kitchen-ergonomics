@@ -506,8 +506,14 @@
     // SVG canvas theme palette (light/dark)
     function TH() {
       return S.theme === 'dark'
-        ? { canvasBg:'#1a1a1e', grid:'#34343c', surface:'#3a3a42', labelBg:'#2c2c33', cabinetLine:'#666', dimLine:'#aaa', screenLine:'#f0f0f0' }
-        : { canvasBg:'#fff', grid:'#ddd', surface:'#d9d9d9', labelBg:'#fff', cabinetLine:'#999', dimLine:'#333', screenLine:'#111' };
+        ? { canvasBg:'#16161a', grid:'#2a2a30', surface:'#26262c', labelBg:'#26262c', cabinetLine:'#555',
+            dimLine:'#888', screenLine:'#f5f5f5',
+            body:'#9aa0ff', cabinet:'#7a82e0', ground:'#7a82e0', objFill:'#5a5a64', objStroke:'#9aa0ff',
+            sectorFill:'#3a4170', sectorStroke:'#8a92e0', accent:'#ff5c78' }
+        : { canvasBg:'#fff', grid:'#ddd', surface:'#d9d9d9', labelBg:'#fff', cabinetLine:'#999',
+            dimLine:'#333', screenLine:'#111',
+            body:'#3b429e', cabinet:'#3b429e', ground:'#3b429e', objFill:'#d9d9d9', objStroke:'#3b429e',
+            sectorFill:'#c5cae9', sectorStroke:'#3b429e', accent:'#e94560' };
     }
 
     function objOffset(counterDepthPx, objWPx) {
@@ -573,8 +579,8 @@
       </pattern></defs>`;
       s += `<rect width="100%" height="100%" fill="${TH().canvasBg}"/>`;
       s += `<rect width="100%" height="100%" fill="url(#g)"/>`;
-      s += `<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="#3b429e" stroke-width="2.5"/>`;
-      s += `<rect x="0" y="${gy}" width="${W}" height="4" fill="#3b429e" opacity="0.1"/>`;
+      s += `<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="${TH().ground}" stroke-width="2.5"/>`;
+      s += `<rect x="0" y="${gy}" width="${W}" height="4" fill="${TH().ground}" opacity="0.1"/>`;
       return s;
     }
 
@@ -585,7 +591,7 @@
       const cabinetLeft = counterFront - S.counterDepth * sc;
       const cTop = gy - S.counterHeight * sc;
       const cW = S.counterDepth * sc;
-      const cabinetColor = '#3b429e';
+      const cabinetColor = TH().cabinet;
 
       // Wall (gray background)
       s += `<rect x="${cabinetLeft}" y="0" width="${cW * 0.25}" height="${gy}"
@@ -623,11 +629,11 @@
 
       // Object body
       s += `<rect x="${objLeft}" y="${objTop}" width="${objW}" height="${objH}"
-            fill="#d9d9d9" stroke="#3b429e" stroke-width="1.5"/>`;
+            fill="${TH().objFill}" stroke="${TH().objStroke}" stroke-width="1.5"/>`;
 
       // Label
       s += `<text x="${objLeft + objW/2}" y="${objTop + objH/2 + 4}" text-anchor="middle"
-            font-size="11" fill="#e94560" font-family="monospace">${S.objWidth}×${S.objHeight}</text>`;
+            font-size="11" fill="${TH().accent}" font-family="monospace">${S.objWidth}×${S.objHeight}</text>`;
 
       return s;
     }
@@ -669,7 +675,7 @@
           const r = 130;
           const normalAngle = -Math.PI / 2;
           const half = Math.PI / 4;
-          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, '#c5cae9', '#3b429e');
+          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, TH().sectorFill, TH().sectorStroke);
 
           // Check if eye POINT is within the 45° cone
           const dx = eyeX - midX, dy = eyeY - midY;
@@ -699,7 +705,7 @@
           const r = 130;
           const normalAngle = 0;
           const half = Math.PI / 4;
-          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, '#c5cae9', '#3b429e');
+          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, TH().sectorFill, TH().sectorStroke);
 
           // Check if eye POINT is within the 45° cone
           const dx = eyeX - midX, dy = eyeY - midY;
@@ -738,8 +744,8 @@
       let s = '';
       const sc = px(1);
       const j = calcJoints(gy, sc, personX, b);
-      const col = '#3b429e';
-      const jcol = '#e94560';
+      const col = TH().body;
+      const jcol = TH().accent;
 
       // Body segments with proportional stroke width (round caps give organic shape)
       // Legs
@@ -773,7 +779,7 @@
 
       // Joints (visible dots)
       [j.hip, j.waist, j.shoulder, j.elbow, j.neckBase, j.knee].forEach(p => {
-        s += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${jcol}" stroke="#fff" stroke-width="1"/>`;
+        s += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${jcol}" stroke="${TH().canvasBg}" stroke-width="1"/>`;
       });
       // Draggable joint hit areas
       const dragJoints = [
@@ -795,8 +801,8 @@
       const cosR = Math.cos(headRotRad), sinR = Math.sin(headRotRad);
       const eyeX = j.headCenter.x + eyeLocalX * cosR - eyeLocalY * sinR;
       const eyeY = j.headCenter.y + eyeLocalX * sinR + eyeLocalY * cosR;
-      s += `<circle cx="${eyeX}" cy="${eyeY}" r="5" fill="#ff9800" stroke="#fff" stroke-width="1.5"/>`;
-      s += `<circle cx="${eyeX}" cy="${eyeY}" r="2" fill="#333"/>`;
+      s += `<circle cx="${eyeX}" cy="${eyeY}" r="5" fill="#ff9800" stroke="${TH().canvasBg}" stroke-width="1.5"/>`;
+      s += `<circle cx="${eyeX}" cy="${eyeY}" r="2" fill="${TH().canvasBg}"/>`;
       s += `<text x="${eyeX - 4}" y="${eyeY - 12}" font-size="11" fill="#ff9800" font-family="monospace">眼睛</text>`;
 
       // Eye height reference line
@@ -804,7 +810,7 @@
             stroke="#ff9800" stroke-width="1" stroke-dasharray="4,3"/>`;
       const eyeHcm = ((gy - eyeY) / sc).toFixed(1);
       s += `<rect x="${personX + 56}" y="${eyeY - 9}" width="78" height="16" fill="${TH().labelBg}" rx="2" opacity="0.9"/>`;
-      s += `<text x="${personX + 59}" y="${eyeY + 4}" font-size="12" fill="#e94560" font-family="monospace">眼高${eyeHcm}cm</text>`;
+      s += `<text x="${personX + 59}" y="${eyeY + 4}" font-size="12" fill="${TH().accent}" font-family="monospace">眼高${eyeHcm}cm</text>`;
 
       // Angle arcs with prominent labels
       // Waist/trunk angle
@@ -830,7 +836,7 @@
 
       // Vertical reference (red center line)
       s += `<line x1="${personX}" y1="${gy}" x2="${personX}" y2="${gy - S.height*sc}"
-            stroke="#e94560" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.5"/>`;
+            stroke="${TH().accent}" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.5"/>`;
 
       return s;
     }
@@ -931,7 +937,7 @@
       const midA = ((startDeg + endDeg) / 2) * Math.PI / 180;
       const lx = center.x + (r + 20) * Math.cos(Math.PI - midA);
       const ly = center.y - (r + 20) * Math.sin(Math.PI - midA);
-      s += `<text x="${lx}" y="${ly}" font-size="12" fill="#e94560" text-anchor="middle" font-family="monospace">${label}</text>`;
+      s += `<text x="${lx}" y="${ly}" font-size="12" fill="${TH().accent}" text-anchor="middle" font-family="monospace">${label}</text>`;
       return s;
     }
 
@@ -941,16 +947,16 @@
 
       // Arrow marker
       s += `<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-        <path d="M 0 1.5 L 8 4 L 0 6.5" fill="none" stroke="#e94560" stroke-width="1"/>
+        <path d="M 0 1.5 L 8 4 L 0 6.5" fill="none" stroke="${TH().accent}" stroke-width="1"/>
       </marker></defs>`;
 
       // Height dimension (prominent, right side)
       const dx = px_ + 50;
-      s += `<line x1="${dx}" y1="${gy}" x2="${dx}" y2="${gy - S.height*sc}" stroke="#e94560" stroke-width="1.5"/>`;
-      s += `<line x1="${dx-5}" y1="${gy}" x2="${dx+5}" y2="${gy}" stroke="#e94560" stroke-width="1.5"/>`;
-      s += `<line x1="${dx-5}" y1="${gy - S.height*sc}" x2="${dx+5}" y2="${gy - S.height*sc}" stroke="#e94560" stroke-width="1.5"/>`;
+      s += `<line x1="${dx}" y1="${gy}" x2="${dx}" y2="${gy - S.height*sc}" stroke="${TH().accent}" stroke-width="1.5"/>`;
+      s += `<line x1="${dx-5}" y1="${gy}" x2="${dx+5}" y2="${gy}" stroke="${TH().accent}" stroke-width="1.5"/>`;
+      s += `<line x1="${dx-5}" y1="${gy - S.height*sc}" x2="${dx+5}" y2="${gy - S.height*sc}" stroke="${TH().accent}" stroke-width="1.5"/>`;
       s += `<rect x="${dx+4}" y="${(gy + gy - S.height*sc)/2 - 10}" width="42" height="20" fill="${TH().labelBg}" rx="3"/>`;
-      s += `<text x="${dx+8}" y="${(gy + gy - S.height*sc)/2 + 4}" font-size="14" fill="#e94560" font-family="monospace">${S.height}</text>`;
+      s += `<text x="${dx+8}" y="${(gy + gy - S.height*sc)/2 + 4}" font-size="14" fill="${TH().accent}" font-family="monospace">${S.height}</text>`;
 
       // Counter height (left)
       const counterFront = px_ - S.personDist*sc;
@@ -959,7 +965,7 @@
       s += `<line x1="${cDimX}" y1="${gy}" x2="${cDimX}" y2="${gy - S.counterHeight*sc}" stroke="${TH().dimLine}" stroke-width="1"/>`;
       s += `<line x1="${cDimX-4}" y1="${gy}" x2="${cDimX+4}" y2="${gy}" stroke="${TH().dimLine}" stroke-width="1"/>`;
       s += `<line x1="${cDimX-4}" y1="${gy - S.counterHeight*sc}" x2="${cDimX+4}" y2="${gy - S.counterHeight*sc}" stroke="${TH().dimLine}" stroke-width="1"/>`;
-      s += `<text x="${cDimX-4}" y="${(gy + gy - S.counterHeight*sc)/2 + 4}" font-size="11" fill="#e94560" font-family="monospace" text-anchor="end">${S.counterHeight}</text>`;
+      s += `<text x="${cDimX-4}" y="${(gy + gy - S.counterHeight*sc)/2 + 4}" font-size="11" fill="${TH().accent}" font-family="monospace" text-anchor="end">${S.counterHeight}</text>`;
 
       // Side screen to eye horizontal distance
       const j = calcJoints(gy, sc, px_, b);
@@ -973,9 +979,9 @@
       const sideScreenX = counterBack + objOffset(S.counterDepth*sc, objW) + objW;
       const distPx = eyeX - sideScreenX;
       const distCm = (distPx / sc).toFixed(1);
-      s += `<line x1="${sideScreenX}" y1="${gy + 20}" x2="${eyeX}" y2="${gy + 20}" stroke="#e94560" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`;
+      s += `<line x1="${sideScreenX}" y1="${gy + 20}" x2="${eyeX}" y2="${gy + 20}" stroke="${TH().accent}" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`;
       s += `<rect x="${(sideScreenX+eyeX)/2 - 28}" y="${gy + 26}" width="56" height="16" fill="${TH().labelBg}" rx="2"/>`;
-      s += `<text x="${(sideScreenX + eyeX)/2}" y="${gy + 38}" text-anchor="middle" font-size="12" fill="#e94560" font-family="monospace">${distCm}cm</text>`;
+      s += `<text x="${(sideScreenX + eyeX)/2}" y="${gy + 38}" text-anchor="middle" font-size="12" fill="${TH().accent}" font-family="monospace">${distCm}cm</text>`;
 
       return s;
     }
