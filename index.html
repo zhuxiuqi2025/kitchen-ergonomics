@@ -5,11 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>厨房人机工程学模型</title>
   <style>
+    :root {
+      --bg: #fff;
+      --text: #333;
+      --text-dim: #666;
+      --text-mute: #999;
+      --sidebar-bg: #fafafa;
+      --panel-border: #eee;
+      --field-bg: #fff;
+      --field-border: #ddd;
+      --canvas-border: #e0e0e0;
+      --accent: #e94560;
+    }
+    [data-theme="dark"] {
+      --bg: #1a1a1e;
+      --text: #e8e8ea;
+      --text-dim: #b0b0b6;
+      --text-mute: #777;
+      --sidebar-bg: #232328;
+      --panel-border: #34343c;
+      --field-bg: #2c2c33;
+      --field-border: #44444e;
+      --canvas-border: #34343c;
+      --accent: #ff5c78;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
-      background: #fff;
-      color: #333;
+      background: var(--bg);
+      color: var(--text);
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -23,25 +47,25 @@
     .canvas-area {
       flex: 1;
       position: relative;
-      background: #fff;
-      border-right: 1px solid #e0e0e0;
+      background: var(--bg);
+      border-right: 1px solid var(--canvas-border);
     }
     .canvas-area svg { width: 100%; height: 100%; }
     .sidebar {
       width: 300px;
-      background: #fafafa;
+      background: var(--sidebar-bg);
       overflow-y: auto;
       padding: 0;
-      border-left: 1px solid #eee;
+      border-left: 1px solid var(--panel-border);
     }
     .panel {
       padding: 14px 16px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--panel-border);
     }
     .panel-title {
       font-size: 12px;
       font-weight: 600;
-      color: #e94560;
+      color: var(--accent);
       margin-bottom: 10px;
       letter-spacing: 0.5px;
     }
@@ -53,7 +77,7 @@
     }
     .row label {
       font-size: 12px;
-      color: #666;
+      color: var(--text-dim);
       width: 72px;
       flex-shrink: 0;
     }
@@ -61,7 +85,7 @@
       flex: 1;
       height: 3px;
       -webkit-appearance: none;
-      background: #ddd;
+      background: var(--field-border);
       border-radius: 2px;
       outline: none;
     }
@@ -70,14 +94,14 @@
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: #e94560;
+      background: var(--accent);
       cursor: pointer;
-      border: 2px solid #fff;
+      border: 2px solid var(--field-bg);
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     .row .val {
       font-size: 11px;
-      color: #e94560;
+      color: var(--accent);
       width: 42px;
       text-align: right;
       font-family: 'SF Mono', Menlo, monospace;
@@ -85,34 +109,34 @@
     }
     .row input[type="number"] {
       width: 56px;
-      background: #fff;
-      border: 1px solid #ddd;
-      color: #333;
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
+      color: var(--text);
       padding: 4px 6px;
       border-radius: 4px;
       font-size: 12px;
       outline: none;
       text-align: center;
     }
-    .row input[type="number"]:focus { border-color: #e94560; }
-    .row .unit { font-size: 11px; color: #999; width: 24px; }
+    .row input[type="number"]:focus { border-color: var(--accent); }
+    .row .unit { font-size: 11px; color: var(--text-mute); width: 24px; }
     .toggle-row {
       display: flex;
       align-items: center;
       margin-bottom: 8px;
       gap: 8px;
     }
-    .toggle-row label { font-size: 12px; color: #666; flex: 1; }
+    .toggle-row label { font-size: 12px; color: var(--text-dim); flex: 1; }
     .toggle {
       width: 36px;
       height: 20px;
-      background: #ddd;
+      background: var(--field-border);
       border-radius: 10px;
       position: relative;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .toggle.on { background: #e94560; }
+    .toggle.on { background: var(--accent); }
     .toggle::after {
       content: '';
       width: 16px;
@@ -135,14 +159,14 @@
     .preset-btn {
       padding: 4px 10px;
       font-size: 11px;
-      background: #fff;
-      border: 1px solid #ddd;
-      color: #666;
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
+      color: var(--text-dim);
       border-radius: 12px;
       cursor: pointer;
     }
-    .preset-btn:hover { border-color: #e94560; color: #e94560; }
-    .preset-btn.active { background: #e94560; color: #fff; border-color: #e94560; }
+    .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .preset-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
     .save-row {
       display: flex;
       gap: 6px;
@@ -150,41 +174,41 @@
     }
     .save-row input {
       flex: 1;
-      background: #fff;
-      border: 1px solid #ddd;
-      color: #333;
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
+      color: var(--text);
       padding: 5px 8px;
       border-radius: 4px;
       font-size: 12px;
       outline: none;
     }
-    .save-row input:focus { border-color: #e94560; }
+    .save-row input:focus { border-color: var(--accent); }
     .save-row button {
       padding: 5px 12px;
-      border: 1px solid #e94560;
-      background: #e94560;
+      border: 1px solid var(--accent);
+      background: var(--accent);
       color: #fff;
       border-radius: 4px;
       font-size: 12px;
       cursor: pointer;
     }
-    .save-row button:hover { background: #d33b54; }
+    .save-row button:hover { opacity: 0.85; }
     .config-list { display: flex; flex-direction: column; gap: 4px; }
     .config-item {
       display: flex;
       align-items: center;
-      background: #fff;
-      border: 1px solid #eee;
+      background: var(--field-bg);
+      border: 1px solid var(--panel-border);
       border-radius: 4px;
       padding: 6px 8px;
       gap: 6px;
       transition: border-color 0.15s;
     }
-    .config-item:hover { border-color: #e94560; }
+    .config-item:hover { border-color: var(--accent); }
     .config-item .cname {
       flex: 1;
       font-size: 12px;
-      color: #333;
+      color: var(--text);
       cursor: pointer;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -192,13 +216,13 @@
     }
     .config-item .cmeta {
       font-size: 10px;
-      color: #999;
+      color: var(--text-mute);
       margin-right: 4px;
     }
     .config-item button {
       background: none;
       border: none;
-      color: #999;
+      color: var(--text-mute);
       font-size: 11px;
       cursor: pointer;
       padding: 2px 4px;
@@ -206,7 +230,7 @@
     .config-item button:hover { color: #c62828; }
     .config-empty {
       font-size: 11px;
-      color: #aaa;
+      color: var(--text-mute);
       text-align: center;
       padding: 12px 4px;
     }
@@ -216,13 +240,13 @@
       gap: 4px;
     }
     .data-item {
-      background: #fff;
+      background: var(--field-bg);
       padding: 6px 8px;
       border-radius: 4px;
-      border: 1px solid #eee;
+      border: 1px solid var(--panel-border);
     }
-    .data-item .dl { font-size: 10px; color: #999; }
-    .data-item .dv { font-size: 13px; color: #333; font-family: 'SF Mono', Menlo, monospace; font-weight: 600; }
+    .data-item .dl { font-size: 10px; color: var(--text-mute); }
+    .data-item .dv { font-size: 13px; color: var(--text); font-family: 'SF Mono', Menlo, monospace; font-weight: 600; }
     .comfort-box {
       margin-top: 8px;
       padding: 8px 10px;
@@ -233,6 +257,21 @@
     .comfort-good { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
     .comfort-warn { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
     .comfort-bad { background: #fce4ec; color: #c62828; border: 1px solid #f8bbd0; }
+    [data-theme="dark"] .comfort-good { background: #18301c; color: #81c784; border-color: #2e4a33; }
+    [data-theme="dark"] .comfort-warn { background: #332408; color: #ffb74d; border-color: #4d3a14; }
+    [data-theme="dark"] .comfort-bad { background: #3a1620; color: #ef9a9a; border-color: #5a2331; }
+    .theme-toggle {
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
+      color: var(--text-dim);
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      float: right;
+      margin-top: -2px;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
     .bottom-bar {
       height: 6px;
       background: #2196f3;
@@ -241,14 +280,14 @@
     .btn {
       flex: 1;
       padding: 6px 8px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--field-border);
       border-radius: 4px;
       font-size: 11px;
       cursor: pointer;
-      background: #fff;
-      color: #666;
+      background: var(--field-bg);
+      color: var(--text-dim);
     }
-    .btn:hover { border-color: #e94560; color: #e94560; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
   </style>
 </head>
 <body>
@@ -258,10 +297,10 @@
     </div>
     <div class="sidebar">
       <div class="panel">
-        <div class="panel-title">人体参数</div>
+        <div class="panel-title">人体参数<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 暗色</button></div>
         <div class="row">
           <label>人群</label>
-          <select id="inputRegion" style="width:80px;background:#fff;border:1px solid #ddd;color:#333;padding:4px 6px;border-radius:4px;font-size:12px;">
+          <select id="inputRegion" style="width:80px;background:var(--field-bg);border:1px solid var(--field-border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;">
             <option value="europe">欧洲人</option>
             <option value="china">中国人</option>
           </select>
@@ -273,7 +312,7 @@
         </div>
         <div class="row">
           <label>性别</label>
-          <select id="inputGender" style="width:56px;background:#fff;border:1px solid #ddd;color:#333;padding:4px 6px;border-radius:4px;font-size:12px;">
+          <select id="inputGender" style="width:56px;background:var(--field-bg);border:1px solid var(--field-border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;">
             <option value="male">男</option>
             <option value="female">女</option>
             <option value="all">所有</option>
@@ -460,8 +499,16 @@
       topScreenOn: true, topScreenW: 5, topScreenPos: 90,
       sideScreenOn: true, sideScreenW: 5, sideScreenPos: 85,
       showTopVis: true, showSideVis: true,
-      defaultScale: true, zoom: 1, panX: 0, panY: 0
+      defaultScale: true, zoom: 1, panX: 0, panY: 0,
+      theme: 'light'
     };
+
+    // SVG canvas theme palette (light/dark)
+    function TH() {
+      return S.theme === 'dark'
+        ? { canvasBg:'#1a1a1e', grid:'#34343c', surface:'#3a3a42', labelBg:'#2c2c33', cabinetLine:'#666', dimLine:'#aaa', screenLine:'#f0f0f0' }
+        : { canvasBg:'#fff', grid:'#ddd', surface:'#d9d9d9', labelBg:'#fff', cabinetLine:'#999', dimLine:'#333', screenLine:'#111' };
+    }
 
     function objOffset(counterDepthPx, objWPx) {
       if (S.objPos === 'left') return 0;
@@ -522,9 +569,9 @@
     function grid(gy) {
       const g = px(10);
       let s = `<defs><pattern id="g" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
-        <path d="M ${g} 0 L 0 0 0 ${g}" fill="none" stroke="#ddd" stroke-width="0.5"/>
+        <path d="M ${g} 0 L 0 0 0 ${g}" fill="none" stroke="${TH().grid}" stroke-width="0.5"/>
       </pattern></defs>`;
-      s += `<rect width="100%" height="100%" fill="#fff"/>`;
+      s += `<rect width="100%" height="100%" fill="${TH().canvasBg}"/>`;
       s += `<rect width="100%" height="100%" fill="url(#g)"/>`;
       s += `<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="#3b429e" stroke-width="2.5"/>`;
       s += `<rect x="0" y="${gy}" width="${W}" height="4" fill="#3b429e" opacity="0.1"/>`;
@@ -542,21 +589,21 @@
 
       // Wall (gray background)
       s += `<rect x="${cabinetLeft}" y="0" width="${cW * 0.25}" height="${gy}"
-            fill="#d9d9d9" stroke="none"/>`;
+            fill="${TH().surface}" stroke="none"/>`;
 
       // Base cabinet (counter height is to the top edge)
       s += `<rect x="${cabinetLeft}" y="${cTop}" width="${cW}" height="${S.counterHeight*sc}"
-            fill="#fff" stroke="${cabinetColor}" stroke-width="2"/>`;
+            fill="${TH().canvasBg}" stroke="${cabinetColor}" stroke-width="2"/>`;
 
       // Wall cabinet
       const wcBot = gy - S.wallCabinetHeight * sc;
       const wcTop = wcBot - S.wallCabinetH * sc;
       const wcW = S.wallCabinetDepth * sc;
       s += `<rect x="${cabinetLeft}" y="${wcTop}" width="${wcW}" height="${S.wallCabinetH*sc}"
-            fill="#fff" stroke="${cabinetColor}" stroke-width="2"/>`;
+            fill="${TH().canvasBg}" stroke="${cabinetColor}" stroke-width="2"/>`;
 
       // Wall line
-      s += `<line x1="${cabinetLeft}" y1="0" x2="${cabinetLeft}" y2="${gy}" stroke="#999" stroke-width="1"/>`;
+      s += `<line x1="${cabinetLeft}" y1="0" x2="${cabinetLeft}" y2="${gy}" stroke="${TH().cabinetLine}" stroke-width="1"/>`;
 
       return s;
     }
@@ -613,7 +660,7 @@
         const tPos = S.topScreenPos / 100;
         const tLeft = objLeft + (objW - tW) * tPos;
         const tY = objTop;
-        s += `<line x1="${tLeft}" y1="${tY}" x2="${tLeft + tW}" y2="${tY}" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>`;
+        s += `<line x1="${tLeft}" y1="${tY}" x2="${tLeft + tW}" y2="${tY}" stroke="${TH().screenLine}" stroke-width="3.5" stroke-linecap="round"/>`;
 
         // 45° fan sector (screen faces up, normal is upward)
         if (S.showTopVis) {
@@ -643,7 +690,7 @@
         const sPos = S.sideScreenPos / 100;
         const sX = objLeft + objW;
         const sTop = objTop + (objH - sW) * (1 - sPos);
-        s += `<line x1="${sX}" y1="${sTop}" x2="${sX}" y2="${sTop + sW}" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>`;
+        s += `<line x1="${sX}" y1="${sTop}" x2="${sX}" y2="${sTop + sW}" stroke="${TH().screenLine}" stroke-width="3.5" stroke-linecap="round"/>`;
 
         // 45° fan sector (screen faces right, normal is rightward)
         if (S.showSideVis) {
@@ -756,7 +803,7 @@
       s += `<line x1="${eyeX}" y1="${eyeY}" x2="${personX + 55}" y2="${eyeY}"
             stroke="#ff9800" stroke-width="1" stroke-dasharray="4,3"/>`;
       const eyeHcm = ((gy - eyeY) / sc).toFixed(1);
-      s += `<rect x="${personX + 56}" y="${eyeY - 9}" width="78" height="16" fill="#fff" rx="2" opacity="0.9"/>`;
+      s += `<rect x="${personX + 56}" y="${eyeY - 9}" width="78" height="16" fill="${TH().labelBg}" rx="2" opacity="0.9"/>`;
       s += `<text x="${personX + 59}" y="${eyeY + 4}" font-size="12" fill="#e94560" font-family="monospace">眼高${eyeHcm}cm</text>`;
 
       // Angle arcs with prominent labels
@@ -902,16 +949,16 @@
       s += `<line x1="${dx}" y1="${gy}" x2="${dx}" y2="${gy - S.height*sc}" stroke="#e94560" stroke-width="1.5"/>`;
       s += `<line x1="${dx-5}" y1="${gy}" x2="${dx+5}" y2="${gy}" stroke="#e94560" stroke-width="1.5"/>`;
       s += `<line x1="${dx-5}" y1="${gy - S.height*sc}" x2="${dx+5}" y2="${gy - S.height*sc}" stroke="#e94560" stroke-width="1.5"/>`;
-      s += `<rect x="${dx+4}" y="${(gy + gy - S.height*sc)/2 - 10}" width="42" height="20" fill="#fff" rx="3"/>`;
+      s += `<rect x="${dx+4}" y="${(gy + gy - S.height*sc)/2 - 10}" width="42" height="20" fill="${TH().labelBg}" rx="3"/>`;
       s += `<text x="${dx+8}" y="${(gy + gy - S.height*sc)/2 + 4}" font-size="14" fill="#e94560" font-family="monospace">${S.height}</text>`;
 
       // Counter height (left)
       const counterFront = px_ - S.personDist*sc;
       const cabinetLeft = counterFront - S.counterDepth*sc;
       const cDimX = cabinetLeft - 25;
-      s += `<line x1="${cDimX}" y1="${gy}" x2="${cDimX}" y2="${gy - S.counterHeight*sc}" stroke="#333" stroke-width="1"/>`;
-      s += `<line x1="${cDimX-4}" y1="${gy}" x2="${cDimX+4}" y2="${gy}" stroke="#333" stroke-width="1"/>`;
-      s += `<line x1="${cDimX-4}" y1="${gy - S.counterHeight*sc}" x2="${cDimX+4}" y2="${gy - S.counterHeight*sc}" stroke="#333" stroke-width="1"/>`;
+      s += `<line x1="${cDimX}" y1="${gy}" x2="${cDimX}" y2="${gy - S.counterHeight*sc}" stroke="${TH().dimLine}" stroke-width="1"/>`;
+      s += `<line x1="${cDimX-4}" y1="${gy}" x2="${cDimX+4}" y2="${gy}" stroke="${TH().dimLine}" stroke-width="1"/>`;
+      s += `<line x1="${cDimX-4}" y1="${gy - S.counterHeight*sc}" x2="${cDimX+4}" y2="${gy - S.counterHeight*sc}" stroke="${TH().dimLine}" stroke-width="1"/>`;
       s += `<text x="${cDimX-4}" y="${(gy + gy - S.counterHeight*sc)/2 + 4}" font-size="11" fill="#e94560" font-family="monospace" text-anchor="end">${S.counterHeight}</text>`;
 
       // Side screen to eye horizontal distance
@@ -927,7 +974,7 @@
       const distPx = eyeX - sideScreenX;
       const distCm = (distPx / sc).toFixed(1);
       s += `<line x1="${sideScreenX}" y1="${gy + 20}" x2="${eyeX}" y2="${gy + 20}" stroke="#e94560" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`;
-      s += `<rect x="${(sideScreenX+eyeX)/2 - 28}" y="${gy + 26}" width="56" height="16" fill="#fff" rx="2"/>`;
+      s += `<rect x="${(sideScreenX+eyeX)/2 - 28}" y="${gy + 26}" width="56" height="16" fill="${TH().labelBg}" rx="2"/>`;
       s += `<text x="${(sideScreenX + eyeX)/2}" y="${gy + 38}" text-anchor="middle" font-size="12" fill="#e94560" font-family="monospace">${distCm}cm</text>`;
 
       return s;
@@ -1369,6 +1416,21 @@
       if (e.key === 'Enter') saveNamedConfig();
     });
     window.addEventListener('resize', ()=>{ resize(); render(); });
+    function applyTheme() {
+      if (S.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = S.theme === 'dark' ? '☀️ 亮色' : '🌙 暗色';
+    }
+    function toggleTheme() {
+      S.theme = S.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('kitchen_ergo_theme', S.theme);
+      applyTheme();
+      render();
+    }
+
+    S.theme = localStorage.getItem('kitchen_ergo_theme') || 'light';
+    applyTheme();
     resize(); bind(); syncUI(); setA(S.neckAngle, S.waistAngle, S.shoulderAngle, S.elbowAngle, S.kneeAngle || 0);
   </script>
 </body>
