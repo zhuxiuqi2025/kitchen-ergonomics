@@ -508,12 +508,14 @@
       return S.theme === 'dark'
         ? { canvasBg:'#16161a', grid:'#2a2a30', surface:'#26262c', labelBg:'#26262c', cabinetLine:'#555',
             dimLine:'#888', screenLine:'#f5f5f5',
-            body:'#3b429e', cabinet:'#7a82e0', ground:'#7a82e0', objFill:'#33333a', objStroke:'#9aa0ff',
-            sectorFill:'#3a4170', sectorStroke:'#8a92e0', accent:'#ff5c78' }
+            body:'#7c84e8', cabinet:'#7a82e0', ground:'#7a82e0', objFill:'#33333a', objStroke:'#9aa0ff',
+            sectorFill:'#3a4170', sectorStroke:'#8a92e0',
+            sectorOkFill:'#1e3a24', sectorOkStroke:'#4caf50', accent:'#ff5c78' }
         : { canvasBg:'#fff', grid:'#ddd', surface:'#d9d9d9', labelBg:'#fff', cabinetLine:'#999',
             dimLine:'#333', screenLine:'#111',
             body:'#3b429e', cabinet:'#3b429e', ground:'#3b429e', objFill:'#d9d9d9', objStroke:'#3b429e',
-            sectorFill:'#c5cae9', sectorStroke:'#3b429e', accent:'#e94560' };
+            sectorFill:'#c5cae9', sectorStroke:'#3b429e',
+            sectorOkFill:'#c8e6c9', sectorOkStroke:'#2e7d32', accent:'#e94560' };
     }
 
     function objOffset(counterDepthPx, objWPx) {
@@ -675,13 +677,14 @@
           const r = 130;
           const normalAngle = -Math.PI / 2;
           const half = Math.PI / 4;
-          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, TH().sectorFill, TH().sectorStroke);
 
           // Check if eye POINT is within the 45° cone
           const dx = eyeX - midX, dy = eyeY - midY;
           const angle = Math.atan2(dy, dx);
           const diff = Math.abs(angleDiff(angle, normalAngle));
           const inCone = diff <= half;
+          s += sector(midX, midY, r, normalAngle - half, normalAngle + half,
+                inCone ? TH().sectorOkFill : TH().sectorFill, inCone ? TH().sectorOkStroke : TH().sectorStroke);
           s += `<line x1="${midX}" y1="${midY}" x2="${eyeX}" y2="${eyeY}"
                 stroke="${inCone ? '#2e7d32' : '#c62828'}" stroke-width="1.5" stroke-dasharray="4,3"/>`;
           const lbX = (midX + eyeX) / 2, lbY = (midY + eyeY) / 2;
@@ -705,13 +708,14 @@
           const r = 130;
           const normalAngle = 0;
           const half = Math.PI / 4;
-          s += sector(midX, midY, r, normalAngle - half, normalAngle + half, TH().sectorFill, TH().sectorStroke);
 
           // Check if eye POINT is within the 45° cone
           const dx = eyeX - midX, dy = eyeY - midY;
           const angle = Math.atan2(dy, dx);
           const diff = Math.abs(angleDiff(angle, normalAngle));
           const inCone = diff <= half;
+          s += sector(midX, midY, r, normalAngle - half, normalAngle + half,
+                inCone ? TH().sectorOkFill : TH().sectorFill, inCone ? TH().sectorOkStroke : TH().sectorStroke);
           s += `<line x1="${midX}" y1="${midY}" x2="${eyeX}" y2="${eyeY}"
                 stroke="${inCone ? '#2e7d32' : '#c62828'}" stroke-width="1.5" stroke-dasharray="4,3"/>`;
           const lbX = (midX + eyeX) / 2, lbY = (midY + eyeY) / 2;
