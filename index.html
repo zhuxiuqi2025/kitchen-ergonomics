@@ -246,7 +246,16 @@
       border: 1px solid var(--panel-border);
     }
     .data-item .dl { font-size: 10px; color: var(--text-mute); }
-    .data-item .dv { font-size: 13px; color: var(--text); font-family: 'SF Mono', Menlo, monospace; font-weight: 600; }
+    .data-item .dv { font-size: 13px; color: var(--text); font-family: 'SF Mono', Menlo, monospace; font-weight: 600; transition: color 0.2s; }
+    .data-item.flash {
+      animation: dataFlash 0.7s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes dataFlash {
+      0% { box-shadow: 0 0 0 0 var(--accent); border-color: var(--accent); }
+      30% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); border-color: var(--accent); }
+      100% { box-shadow: 0 0 0 0 transparent; border-color: var(--panel-border); }
+    }
+    .config-item.playing { border-color: var(--accent); }
     .comfort-box {
       margin-top: 8px;
       padding: 8px 10px;
@@ -819,10 +828,10 @@
       // Angle arcs with prominent labels
       // Waist/trunk angle
       const waistColor = S.waistAngle <= 20 ? '#2e7d32' : S.waistAngle <= 60 ? '#e65100' : '#c62828';
-      s += arc(j.waist, 90, 90 + S.waistAngle, 28, waistColor, `躯干${S.waistAngle}°`);
+      s += arc(j.waist, 90, 90 + S.waistAngle, 28, waistColor, `躯干${Math.round(S.waistAngle)}°`);
       // Neck angle
       const neckColor = S.neckAngle <= 25 ? '#2e7d32' : S.neckAngle <= 85 ? '#e65100' : '#c62828';
-      s += arc(j.neckBase, 90 + S.waistAngle, 90 + S.waistAngle + S.neckAngle, 22, neckColor, `颈${S.neckAngle}°`);
+      s += arc(j.neckBase, 90 + S.waistAngle, 90 + S.waistAngle + S.neckAngle, 22, neckColor, `颈${Math.round(S.neckAngle)}°`);
       // Shoulder arc
       const shoulderColor = S.shoulderAngle <= 20 ? '#2e7d32' : S.shoulderAngle <= 85 ? '#e65100' : '#c62828';
       const trunkRefLen = 30;
@@ -830,12 +839,12 @@
       s += `<line x1="${j.shoulder.x}" y1="${j.shoulder.y}"
             x2="${j.shoulder.x + Math.sin(trunkDownRad) * trunkRefLen}" y2="${j.shoulder.y + Math.cos(trunkDownRad) * trunkRefLen}"
             stroke="${shoulderColor}" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>`;
-      s += arc(j.shoulder, -90 - S.waistAngle, S.shoulderAngle - S.waistAngle - 90, 24, shoulderColor, `肩${S.shoulderAngle}°`);
+      s += arc(j.shoulder, -90 - S.waistAngle, S.shoulderAngle - S.waistAngle - 90, 24, shoulderColor, `肩${Math.round(S.shoulderAngle)}°`);
 
       // Knee arc — bend angle between thigh-down-extension and shank-down
       if ((S.kneeAngle || 0) > 0) {
         const halfKdeg = S.kneeAngle / 2;
-        s += arc(j.knee, -90 - halfKdeg, halfKdeg - 90, 18, '#0277bd', `膝${S.kneeAngle}°`);
+        s += arc(j.knee, -90 - halfKdeg, halfKdeg - 90, 18, '#0277bd', `膝${Math.round(S.kneeAngle)}°`);
       }
 
       // Vertical reference (red center line)
@@ -960,7 +969,7 @@
       s += `<line x1="${dx-5}" y1="${gy}" x2="${dx+5}" y2="${gy}" stroke="${TH().accent}" stroke-width="1.5"/>`;
       s += `<line x1="${dx-5}" y1="${gy - S.height*sc}" x2="${dx+5}" y2="${gy - S.height*sc}" stroke="${TH().accent}" stroke-width="1.5"/>`;
       s += `<rect x="${dx+4}" y="${(gy + gy - S.height*sc)/2 - 10}" width="42" height="20" fill="${TH().labelBg}" rx="3"/>`;
-      s += `<text x="${dx+8}" y="${(gy + gy - S.height*sc)/2 + 4}" font-size="14" fill="${TH().accent}" font-family="monospace">${S.height}</text>`;
+      s += `<text x="${dx+8}" y="${(gy + gy - S.height*sc)/2 + 4}" font-size="14" fill="${TH().accent}" font-family="monospace">${Math.round(S.height)}</text>`;
 
       // Counter height (left)
       const counterFront = px_ - S.personDist*sc;
@@ -1024,7 +1033,7 @@
         { l:'前臂长', v:b.forearm.toFixed(1)+'cm' },
       ];
       document.getElementById('bodyDataGrid').innerHTML = items.map(i =>
-        `<div class="data-item"><span class="dl">${i.l}</span><span class="dv">${i.v}</span></div>`
+        `<div class="data-item" data-label="${i.l}"><span class="dl">${i.l}</span><span class="dv">${i.v}</span></div>`
       ).join('');
     }
 
@@ -1032,17 +1041,18 @@
     function evaluate(b) {
       const issues = [], goods = [];
 
+      const nA = Math.round(S.neckAngle), wA = Math.round(S.waistAngle), shA = Math.round(S.shoulderAngle);
       if (S.neckAngle <= 25) goods.push('颈/头前屈 ≤25° 舒适');
-      else if (S.neckAngle <= 85) issues.push({ t: `颈/头前屈 ${S.neckAngle}°＞25°（超出舒适）`, l: 1 });
-      else issues.push({ t: `颈/头前屈 ${S.neckAngle}°＞85°（不可接受）`, l: 2 });
+      else if (S.neckAngle <= 85) issues.push({ t: `颈/头前屈 ${nA}°＞25°（超出舒适）`, l: 1 });
+      else issues.push({ t: `颈/头前屈 ${nA}°＞85°（不可接受）`, l: 2 });
 
       if (S.waistAngle <= 20) goods.push('躯干前倾 ≤20° 舒适');
-      else if (S.waistAngle <= 60) issues.push({ t: `躯干前倾 ${S.waistAngle}°＞20°（超出舒适）`, l: 1 });
-      else issues.push({ t: `躯干前倾 ${S.waistAngle}°＞60°（不可接受）`, l: 2 });
+      else if (S.waistAngle <= 60) issues.push({ t: `躯干前倾 ${wA}°＞20°（超出舒适）`, l: 1 });
+      else issues.push({ t: `躯干前倾 ${wA}°＞60°（不可接受）`, l: 2 });
 
       if (S.shoulderAngle <= 20) goods.push('肩关节前举 ≤20° 舒适');
-      else if (S.shoulderAngle <= 85) issues.push({ t: `肩关节前举 ${S.shoulderAngle}°＞20°（超出舒适）`, l: 1 });
-      else issues.push({ t: `肩关节前举 ${S.shoulderAngle}°＞85°（不可接受）`, l: 2 });
+      else if (S.shoulderAngle <= 85) issues.push({ t: `肩关节前举 ${shA}°＞20°（超出舒适）`, l: 1 });
+      else issues.push({ t: `肩关节前举 ${shA}°＞85°（不可接受）`, l: 2 });
 
       // Eye in screen cone check — uses rotated eye POINT position
       const sc = px(1);
@@ -1352,23 +1362,96 @@
       input.value = '';
       renderConfigList();
     }
+    let transitionRAF = null;
     function applyNamedConfig(name) {
       const configs = loadConfigs();
       if (!configs[name]) return;
       const d = configs[name].data;
-      // Only apply body/posture params, keep kitchen/object dimensions unchanged
-      const applyKeys = ['height','gender','region','neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle',
-        'personDist','objPos','topScreenOn','sideScreenOn','showTopVis','showSideVis'];
-      S.neckAngle = 0; S.waistAngle = 0; S.shoulderAngle = 0; S.elbowAngle = 90; S.kneeAngle = 0;
-      S.objPos = 'center';
-      applyKeys.forEach(k => { if (d[k] !== undefined) S[k] = d[k]; });
+
+      // Numeric fields are interpolated for continuity; non-numeric ones switch instantly (masked by motion).
+      const numKeys = ['height','neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle','personDist'];
+      const instantKeys = ['gender','region','objPos','topScreenOn','sideScreenOn','showTopVis','showSideVis'];
+
+      // Cancel any running transition
+      if (transitionRAF) { cancelAnimationFrame(transitionRAF); transitionRAF = null; }
+
+      // Target values (default missing posture fields to neutral, like before)
+      const defaults = { neckAngle:0, waistAngle:0, shoulderAngle:0, elbowAngle:90, kneeAngle:0, objPos:'center' };
+      const target = {};
+      numKeys.forEach(k => { target[k] = d[k] !== undefined ? d[k] : (defaults[k] !== undefined ? defaults[k] : S[k]); });
+
+      // Capture start values for interpolation
+      const start = {};
+      numKeys.forEach(k => { start[k] = (typeof S[k] === 'number') ? S[k] : (defaults[k] || 0); });
+
+      // Find the biggest-changing posture field → it's the "focus" we flash at the end
+      const fieldToLabel = { height:'眼高', neckAngle:null, waistAngle:null, shoulderAngle:'肩高', elbowAngle:'肘高', kneeAngle:null };
+      let focusField = null, maxDelta = 0;
+      numKeys.forEach(k => {
+        const range = { height:60, neckAngle:90, waistAngle:90, shoulderAngle:120, elbowAngle:180, kneeAngle:120, personDist:120 }[k] || 100;
+        const norm = Math.abs(target[k] - start[k]) / range;
+        if (norm > maxDelta) { maxDelta = norm; focusField = k; }
+      });
+
+      // Apply instant (non-numeric) fields up front + reset view, then sync selects/toggles/buttons immediately
+      instantKeys.forEach(k => { S[k] = d[k] !== undefined ? d[k] : (defaults[k] !== undefined ? defaults[k] : S[k]); });
+      if (d.objPos === undefined) S.objPos = 'center';
       S.zoom = 1; S.panX = 0; S.panY = 0; S.defaultScale = true;
       syncUI();
+
+      // Respect reduced-motion preference → jump straight to target
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const DUR = 420;
+
+      function finish() {
+        numKeys.forEach(k => { S[k] = target[k]; });
+        syncUI(); syncAngleSliders(); render();
+        flashFocus(focusField, fieldToLabel);
+        transitionRAF = null;
+      }
+      if (reduce) { finish(); return; }
+
+      const ease = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; // cubic ease-in-out
+      let t0 = null;
+      function step(ts) {
+        if (t0 === null) t0 = ts;
+        const p = Math.min(1, (ts - t0) / DUR);
+        const e = ease(p);
+        numKeys.forEach(k => { S[k] = start[k] + (target[k] - start[k]) * e; });
+        syncAngleSliders();
+        render();
+        if (p < 1) { transitionRAF = requestAnimationFrame(step); }
+        else { finish(); }
+      }
+      transitionRAF = requestAnimationFrame(step);
+    }
+
+    function syncAngleSliders() {
       ['neckAngle','waistAngle','shoulderAngle','elbowAngle','kneeAngle'].forEach(id => {
-        document.getElementById(id).value = S[id] || 0;
-        document.getElementById(id+'Val').textContent = (S[id]||0)+'°';
+        const v = Math.round(S[id] || 0);
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+        const lbl = document.getElementById(id+'Val');
+        if (lbl) lbl.textContent = v+'°';
       });
-      render();
+      const pd = document.getElementById('personDist');
+      if (pd) pd.value = Math.round((S.personDist||0)*10)/10;
+      const ih = document.getElementById('inputHeight');
+      if (ih) ih.value = Math.round(S.height||0);
+    }
+
+    function flashFocus(focusField, fieldToLabel) {
+      const label = focusField && fieldToLabel[focusField];
+      const grid = document.getElementById('bodyDataGrid');
+      if (!grid) return;
+      const targets = label
+        ? [grid.querySelector(`.data-item[data-label="${label}"]`)].filter(Boolean)
+        : Array.from(grid.querySelectorAll('.data-item'));
+      targets.forEach(el => {
+        el.classList.remove('flash');
+        void el.offsetWidth; // reflow to restart animation
+        el.classList.add('flash');
+      });
     }
     function deleteNamedConfig(name, ev) {
       ev.stopPropagation();
